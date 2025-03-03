@@ -24,7 +24,7 @@ type Service struct {
 	storage *Storage
 }
 
-func (s *Service) GetByShortid(ctx context.Context, linkId string) (string, error) {
+func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, error) {
 	return s.storage.Get(ctx, linkId)
 }
 

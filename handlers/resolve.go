@@ -23,7 +23,7 @@ func NewLinkResolveH(d ResolveHDeps) gin.HandlerFunc {
 			return
 		}
 
-		url, err := d.LinkService.GetByShortid(c, shortId)
+		url, err := d.LinkService.GetByShortId(c, shortId)
 		if err != nil {
 			log.Error().Err(err).Msg("error getting shortlink")
 			d.ErrorPage.InternalError(c)
