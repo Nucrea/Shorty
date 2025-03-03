@@ -4,6 +4,7 @@ import (
 	"context"
 	"html/template"
 	"os"
+	"shorty/links"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -39,15 +40,14 @@ func main() {
 		log.Fatal().Err(err).Msg("error connecting to postgres")
 	}
 
-	storage := NewStorage(db)
-	service := NewService(baseUrl, storage)
+	linkService := links.NewService(db, baseUrl)
 
-	indexPageTmpl, err := template.ParseFiles("views/index.html")
+	indexPageTmpl, err := template.ParseFiles("pages/index.html")
 	if err != nil {
 		log.Fatal().Err(err).Msg("err parsing index page template")
 	}
 
-	linkPageTmpl, err := template.ParseFiles("views/shortlink.html")
+	linkPageTmpl, err := template.ParseFiles("pages/shortlink.html")
 	if err != nil {
 		log.Fatal().Err(err).Msg("err parsing shortlink page template")
 	}
@@ -58,10 +58,10 @@ func main() {
 		ctx.Status(200)
 	})
 
+	server.Static("/static", "./static")
+
 	server.Use(gin.Recovery())
 	server.Use(gin.Logger())
-
-	server.Static("/static", "./static")
 
 	server.GET("/", func(ctx *gin.Context) {
 		indexPageTmpl.Execute(ctx.Writer, IndexPage{})
@@ -84,9 +84,9 @@ func main() {
 				page = ShortlinkPage{}
 			)
 			if isQr {
-				page.QRCode, err = service.CreateQR(ctx, url)
+				page.QRCode, err = linkService.CreateQR(ctx, url)
 			} else {
-				page.Shortlink, err = service.CreateLink(ctx, url)
+				page.Shortlink, err = linkService.CreateLink(ctx, url)
 			}
 			if err != nil {
 				log.Error().Err(err).Msg("error creating shortlink")
@@ -108,7 +108,7 @@ func main() {
 			return
 		}
 
-		url, err := storage.Get(ctx, shortId)
+		url, err := linkService.GetByShortid(ctx, shortId)
 		if err != nil {
 			log.Error().Err(err).Msg("error getting shortlink")
 			ctx.Status(500)

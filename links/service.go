@@ -1,4 +1,4 @@
-package main
+package links
 
 import (
 	"bytes"
@@ -7,20 +7,25 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/yeqown/go-qrcode/v2"
 	"github.com/yeqown/go-qrcode/writer/standard"
 )
 
-func NewService(baseUrl string, storage *Storage) *Service {
+func NewService(pgConn *pgx.Conn, baseUrl string) *Service {
 	return &Service{
 		baseUrl: baseUrl,
-		storage: storage,
+		storage: NewStorage(pgConn),
 	}
 }
 
 type Service struct {
 	baseUrl string
 	storage *Storage
+}
+
+func (s *Service) GetByShortid(ctx context.Context, linkId string) (string, error) {
+	return s.storage.Get(ctx, linkId)
 }
 
 func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
