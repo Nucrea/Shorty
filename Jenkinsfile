@@ -2,6 +2,16 @@ pipeline {
     agent any
 
     stages {
+        stage('Database') {
+            steps {       
+                sh '''#!/bin/bash
+                    psql "${SHORTY_POSTGRES_JENKINS_URL}" -f "./sql/db.sql"
+                    for file in "./sql/migrations/*.sql"; do
+                        psql "${SHORTY_POSTGRES_JENKINS_URL}" -f $file
+                    done
+                '''
+            }
+        }
         stage('Build') {
             steps {
                 sh 'docker build . -t shorty'

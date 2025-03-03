@@ -1,0 +1,1 @@
+alter table shortlinks add column read_count int default 0;
