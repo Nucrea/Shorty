@@ -1,0 +1,8 @@
+create table if not exists shortlinks (
+    id int primary key generated always as identity,
+    short_id varchar(10) not null unique,
+    url text not null,
+    created_at timestamp not null default now()
+);
+
+create index if not exists idx_shortlinks_shortid on shortlinks(short_id);
