@@ -2,23 +2,17 @@ package main
 
 import (
 	"context"
-	"html/template"
 	"os"
+	"shorty/handlers"
 	"shorty/links"
+	genericerror "shorty/pages/generic_error"
+	"shorty/pages/index"
+	"shorty/pages/result"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog"
 )
-
-type IndexPage struct {
-	Error string
-}
-
-type ShortlinkPage struct {
-	Shortlink string
-	QRCode    string
-}
 
 func main() {
 	ctx := context.Background()
@@ -42,15 +36,9 @@ func main() {
 
 	linkService := links.NewService(db, baseUrl)
 
-	indexPageTmpl, err := template.ParseFiles("pages/index.html")
-	if err != nil {
-		log.Fatal().Err(err).Msg("err parsing index page template")
-	}
-
-	linkPageTmpl, err := template.ParseFiles("pages/shortlink.html")
-	if err != nil {
-		log.Fatal().Err(err).Msg("err parsing shortlink page template")
-	}
+	indexPage := index.NewPage()
+	resultPage := result.NewPage()
+	errorPage := genericerror.NewPage()
 
 	server := gin.New()
 
@@ -63,64 +51,23 @@ func main() {
 	server.Use(gin.Recovery())
 	server.Use(gin.Logger())
 
-	server.GET("/", func(ctx *gin.Context) {
-		indexPageTmpl.Execute(ctx.Writer, IndexPage{})
-		ctx.Status(200)
-		ctx.Header("Content-Type", "text/html")
-	})
-
-	server.GET("/create", func(ctx *gin.Context) {
-		func(ctx *gin.Context) {
-			isQr := ctx.Query("qr") == "on"
-
-			url := ctx.Query("url")
-			if url == "" {
-				indexPageTmpl.Execute(ctx.Writer, IndexPage{Error: "Bad url"})
-				return
-			}
-
-			var (
-				err  error
-				page = ShortlinkPage{}
-			)
-			if isQr {
-				page.QRCode, err = linkService.CreateQR(ctx, url)
-			} else {
-				page.Shortlink, err = linkService.CreateLink(ctx, url)
-			}
-			if err != nil {
-				log.Error().Err(err).Msg("error creating shortlink")
-				indexPageTmpl.Execute(ctx.Writer, IndexPage{Error: "Error occured"})
-				return
-			}
-
-			linkPageTmpl.Execute(ctx.Writer, page)
-		}(ctx)
-
-		ctx.Status(200)
-		ctx.Header("Content-Type", "text/html")
-	})
-
-	server.GET("/:id", func(ctx *gin.Context) {
-		shortId := ctx.Param("id")
-		if shortId == "" {
-			ctx.Status(404)
-			return
-		}
-
-		url, err := linkService.GetByShortid(ctx, shortId)
-		if err != nil {
-			log.Error().Err(err).Msg("error getting shortlink")
-			ctx.Status(500)
-			return
-		}
-		if url == "" {
-			ctx.Status(404)
-			return
-		}
-
-		ctx.Redirect(302, url)
-	})
+	server.GET("/", indexPage.Clean)
+	server.GET("/create", handlers.NewLinkCreateH(
+		handlers.CreateHDeps{
+			Log:         &log,
+			IndexPage:   indexPage,
+			ResultPage:  resultPage,
+			ErrorPage:   errorPage,
+			LinkService: linkService,
+		},
+	))
+	server.GET("/:id", handlers.NewLinkResolveH(
+		handlers.ResolveHDeps{
+			Log:         &log,
+			LinkService: linkService,
+			ErrorPage:   errorPage,
+		},
+	))
 
 	server.Run(":8081")
 }
