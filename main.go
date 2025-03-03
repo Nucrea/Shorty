@@ -16,6 +16,7 @@ type IndexPage struct {
 
 type ShortlinkPage struct {
 	Shortlink string
+	QRCode    string
 }
 
 func main() {
@@ -39,6 +40,7 @@ func main() {
 	}
 
 	storage := NewStorage(db)
+	service := NewService(baseUrl, storage)
 
 	indexPageTmpl, err := template.ParseFiles("views/index.html")
 	if err != nil {
@@ -51,8 +53,15 @@ func main() {
 	}
 
 	server := gin.New()
+
+	server.GET("/health", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
+
 	server.Use(gin.Recovery())
 	server.Use(gin.Logger())
+
+	server.Static("/static", "./static")
 
 	server.GET("/", func(ctx *gin.Context) {
 		indexPageTmpl.Execute(ctx.Writer, IndexPage{})
@@ -60,23 +69,33 @@ func main() {
 		ctx.Header("Content-Type", "text/html")
 	})
 
-	server.GET("/health", func(ctx *gin.Context) {
-		ctx.Status(200)
-	})
-
 	server.GET("/create", func(ctx *gin.Context) {
-		if url := ctx.Query("url"); url == "" {
-			indexPageTmpl.Execute(ctx.Writer, IndexPage{Error: "Bad url"})
-		} else {
-			shortlinkId, err := storage.Create(ctx, url)
+		func(ctx *gin.Context) {
+			isQr := ctx.Query("qr") == "on"
+
+			url := ctx.Query("url")
+			if url == "" {
+				indexPageTmpl.Execute(ctx.Writer, IndexPage{Error: "Bad url"})
+				return
+			}
+
+			var (
+				err  error
+				page = ShortlinkPage{}
+			)
+			if isQr {
+				page.QRCode, err = service.CreateQR(ctx, url)
+			} else {
+				page.Shortlink, err = service.CreateLink(ctx, url)
+			}
 			if err != nil {
 				log.Error().Err(err).Msg("error creating shortlink")
 				indexPageTmpl.Execute(ctx.Writer, IndexPage{Error: "Error occured"})
-			} else {
-				link := baseUrl + "/" + shortlinkId
-				linkPageTmpl.Execute(ctx.Writer, ShortlinkPage{Shortlink: link})
+				return
 			}
-		}
+
+			linkPageTmpl.Execute(ctx.Writer, page)
+		}(ctx)
 
 		ctx.Status(200)
 		ctx.Header("Content-Type", "text/html")
