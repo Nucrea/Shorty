@@ -30,7 +30,11 @@ func (s *Storage) Get(ctx context.Context, shortId string) (string, error) {
 	row := s.conn.QueryRow(ctx, query, shortId)
 
 	var url string
-	if err := row.Scan(&url); err != nil {
+	err := row.Scan(&url)
+	if err == pgx.ErrNoRows {
+		return "", nil
+	}
+	if err != nil {
 		return "", err
 	}
 
