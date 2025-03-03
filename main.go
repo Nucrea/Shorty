@@ -60,6 +60,10 @@ func main() {
 		ctx.Header("Content-Type", "text/html")
 	})
 
+	server.GET("/health", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
+
 	server.GET("/create", func(ctx *gin.Context) {
 		if url := ctx.Query("url"); url == "" {
 			indexPageTmpl.Execute(ctx.Writer, IndexPage{Error: "Bad url"})
