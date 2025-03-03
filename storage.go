@@ -22,7 +22,11 @@ func (s *Storage) Create(ctx context.Context, url string) (string, error) {
 }
 
 func (s *Storage) Get(ctx context.Context, shortId string) (string, error) {
-	query := `select url from shortlinks where short_id=$1;`
+	query := `
+	update shortlinks 
+		set read_count=read_count+1
+		where short_id=$1
+		returning url;`
 	row := s.conn.QueryRow(ctx, query, shortId)
 
 	var url string
