@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"html/template"
-	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
+	"github.com/rs/zerolog"
 )
 
 type IndexPage struct {
@@ -21,31 +21,33 @@ type ShortlinkPage struct {
 func main() {
 	ctx := context.Background()
 
+	log := zerolog.New(os.Stdout)
+
 	pgUrl := os.Getenv("SHORTY_POSTGRES_URL")
 	if pgUrl == "" {
-		panic("empty pg url")
+		log.Fatal().Msg("empty db url")
 	}
 
 	baseUrl := os.Getenv("SHORTY_BASE_URL")
 	if baseUrl == "" {
-		panic("empty base url")
+		log.Fatal().Msg("empty base url")
 	}
 
 	db, err := pgx.Connect(ctx, pgUrl)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("error connecting to postgres")
 	}
 
 	storage := NewStorage(db)
 
 	indexPageTmpl, err := template.ParseFiles("views/index.html")
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("err parsing index page template")
 	}
 
 	linkPageTmpl, err := template.ParseFiles("views/shortlink.html")
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("err parsing shortlink page template")
 	}
 
 	server := gin.New()
@@ -64,7 +66,7 @@ func main() {
 		} else {
 			shortlinkId, err := storage.Create(ctx, url)
 			if err != nil {
-				log.Printf("error: %v\n", err)
+				log.Error().Err(err).Msg("error creating shortlink")
 				indexPageTmpl.Execute(ctx.Writer, IndexPage{Error: "Error occured"})
 			} else {
 				link := baseUrl + "/" + shortlinkId
@@ -85,7 +87,11 @@ func main() {
 
 		url, err := storage.Get(ctx, shortId)
 		if err != nil {
-			log.Printf("error: %v\n", err)
+			log.Error().Err(err).Msg("error getting shortlink")
+			ctx.Status(500)
+			return
+		}
+		if url == "" {
 			ctx.Status(404)
 			return
 		}
