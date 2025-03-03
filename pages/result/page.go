@@ -16,7 +16,7 @@ type TemplateParams struct {
 }
 
 func NewPage() *Page {
-	pageTemplate := template.Must(template.ParseFS(htmlFile, "result.html"))
+	pageTemplate := template.Must(template.ParseFS(htmlFile, "page.html"))
 	return &Page{
 		pageTemplate: pageTemplate,
 	}

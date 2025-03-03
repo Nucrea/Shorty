@@ -4,10 +4,10 @@ import (
 	"context"
 	"os"
 	"shorty/handlers"
-	"shorty/links"
 	genericerror "shorty/pages/generic_error"
 	"shorty/pages/index"
 	"shorty/pages/result"
+	"shorty/services/links"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
