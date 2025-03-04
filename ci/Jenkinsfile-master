@@ -1,34 +1,41 @@
 pipeline {
     agent any
 
+    environment {
+        SHORTY_NAME="shorty-master"
+        POSTGRES_NAME="shorty-pg"
+        NETWORK_NAME="shorty-network"
+
+        PSQL_URL="${SHORTY_POSTGRES_JENKINS_URL}"
+    }
+
     stages {
-        stage('Database') {
-            steps {       
-                sh '''#!/bin/bash
-                    psql "${SHORTY_POSTGRES_JENKINS_URL}" -f "./sql/db.sql"
-                    for file in "./sql/migrations/*.sql"; do
-                        psql "${SHORTY_POSTGRES_JENKINS_URL}" -f $file
-                    done
-                '''
+        stage('Prepare DB') {
+            steps {
+                sh "psql ${env.PSQL_URL} -f ./sql/db.sql"
+                sh "for file in ./sql/migrations/*.sql; do psql ${env.PSQL_URL} -f \$file; done"
             }
         }
         stage('Build') {
             steps {
-                sh 'docker build . -t shorty'
+                sh "docker build . -t ${env.SHORTY_NAME}"
             }
         }
-        stage('Deploy') {
+        stage('Check running') {
             steps {
-                sh 'docker stop shorty || true'
-                sh 'docker rm shorty || true'
+                sh "docker stop ${env.SHORTY_NAME} || true"
+                sh "docker rm ${env.SHORTY_NAME} || true"
 
-                sh 'docker run --name=shorty --network=shorty-network \
+                sh "docker run \
+                    --name=${env.SHORTY_NAME} \
+                    --network=${env.NETWORK_NAME} \
                     -p ${SHORTY_APP_PORT}:8081 \
-                    -e SHORTY_POSTGRES_URL=${SHORTY_POSTGRES_URL} \
-                    -e SHORTY_BASE_URL=${SHORTY_BASE_URL} -d shorty'
+                    -e SHORTY_POSTGRES_URL=${env.SHORTY_POSTGRES_URL} \
+                    -e SHORTY_BASE_URL=${env.SHORTY_BASE_URL} \
+                    -d ${env.SHORTY_NAME}"
                 
                 sh 'sleep 1'
-                sh 'curl http://127.0.0.1:${SHORTY_APP_PORT}/health'
+                sh "curl http://127.0.0.1:${SHORTY_APP_PORT}/health"
             }
         }
     }
