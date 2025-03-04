@@ -1,0 +1,75 @@
+pipeline {
+    agent any
+
+    environment {
+        DEV_SHORTY_NAME='shorty-dev-${env.BUILD_ID}'
+        DEV_POSTGRES_NAME='shorty-pg-dev-${env.BUILD_ID}'
+        DEV_NETWORK_NAME='shorty-network-dev-${env.BUILD_ID}'
+    }
+
+    stages {
+        stage('Prepare DB') {
+            environment {
+                RANDOM_PORT="${10000 + Math.abs(new Random().nextInt(50000))}"
+                DEV_PSQL_URL='pogtres://test:test@$localhost:{env.RANDOM_PORT}/test'
+            }
+            steps {
+                sh 'docker network create -d bridge ${env.DEV_NETWORK_NAME} || true'
+
+                sh 'docker run -d \
+                    --network=${env.DEV_NETWORK_NAME} \
+                    --name=${env.DEV_POSTGRES_NAME} \
+                    -p ${env.RANDOM_PORT}:5432 \
+                    -e POSTGRES_DB=test \
+                    -e POSTGRES_USER=test \
+                    -e POSTGRES_PASSWORD=test \
+                    -d postgres:16.4-alpine'
+
+                sh 'sleep 1'
+                sh '''#!/bin/bash
+                    psql "${env.DEV_POSTGRES_URL}" -f "./sql/db.sql"
+                    for file in "./sql/migrations/*.sql"; do
+                        psql "${env.DEV_POSTGRES_URL}" -f $file
+                    done
+                '''
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'docker build . -t ${env.DEV_SHORTY_NAME}'
+            }
+        }
+        stage('Check running') {
+            environment {
+                RANDOM_PORT="${10000 + Math.abs(new Random().nextInt(50000))}"
+                DEV_POSTGRES_URL='pogtres://test:test@${env.DEV_POSTGRES_NAME}:5432/test'
+            }
+            steps {
+                sh 'docker stop ${env.DEV_SHORTY_NAME} || true'
+                sh 'docker rm ${env.DEV_SHORTY_NAME} || true'
+
+                sh 'docker run \
+                    --name=${env.DEV_SHORTY_NAME} \
+                    --network=shorty-network \
+                    -p ${env.RANDOM_PORT}:8081 \
+                    -e SHORTY_POSTGRES_URL=${env.DEV_POSTGRES_URL} \
+                    -e SHORTY_BASE_URL=http://127.0.0.1 \
+                    -d ${env.DEV_SHORTY_NAME}'
+                
+                sh 'sleep 1'
+                sh 'curl http://127.0.0.1:${RANDOM_PORT}/health'
+            }
+        }
+        post {
+            always {
+                sh 'docker stop ${env.DEV_SHORTY_NAME} || true'
+                sh 'docker rm ${env.DEV_SHORTY_NAME} || true'
+
+                sh 'docker stop ${env.DEV_POSTGRES_NAME} || true'
+                sh 'docker rm ${env.DEV_POSTGRES_NAME} || true'
+
+                sh 'docker network rm ${env.DEV_NETWORK_NAME} || true'
+            }
+        }
+    }
+}
