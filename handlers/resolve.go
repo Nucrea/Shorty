@@ -10,6 +10,7 @@ import (
 )
 
 type ResolveHDeps struct {
+	BaseUrl     string
 	Log         *zerolog.Logger
 	ErrorPage   *genericerror.Page
 	LinkService *links.Service
@@ -19,11 +20,15 @@ func NewLinkResolveH(d ResolveHDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		shortId := c.Param("id")
 		if shortId == "" {
-			c.Status(404)
+			c.Redirect(302, d.BaseUrl)
 			return
 		}
 
 		url, err := d.LinkService.GetByShortId(c, shortId)
+		if err == links.ErrNoSuchLink || err == links.ErrBadShortId {
+			d.ErrorPage.NotFound(c)
+			return
+		}
 		if err != nil {
 			log.Error().Err(err).Msg("error getting shortlink")
 			d.ErrorPage.InternalError(c)

@@ -14,8 +14,7 @@ func NewStorage(conn *pgx.Conn) *Storage {
 	return &Storage{conn}
 }
 
-func (s *Storage) Create(ctx context.Context, url string) (string, error) {
-	shortId := GenerateShortId(10)
+func (s *Storage) Create(ctx context.Context, shortId, url string) (string, error) {
 	query := `insert into shortlinks(short_id, url) values($1, $2);`
 	_, err := s.conn.Exec(ctx, query, shortId, url)
 	return shortId, err

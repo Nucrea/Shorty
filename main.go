@@ -63,6 +63,7 @@ func main() {
 	))
 	server.GET("/:id", handlers.NewLinkResolveH(
 		handlers.ResolveHDeps{
+			BaseUrl:     baseUrl,
 			Log:         &log,
 			LinkService: linkService,
 			ErrorPage:   errorPage,
