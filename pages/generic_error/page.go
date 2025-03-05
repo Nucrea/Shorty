@@ -31,8 +31,8 @@ func (p *Page) NotFound(c *gin.Context) {
 		Title: "Not found",
 		Text:  "404 Not Found",
 	})
-	c.Status(404)
 	c.Header("Content-Type", "text/html")
+	c.Status(500)
 }
 
 func (p *Page) InternalError(c *gin.Context) {
@@ -40,6 +40,6 @@ func (p *Page) InternalError(c *gin.Context) {
 		Title: "Internal Error",
 		Text:  "500 Internal Error",
 	})
-	c.Status(500)
 	c.Header("Content-Type", "text/html")
+	c.Status(500)
 }

@@ -37,6 +37,10 @@ func NewLinkCreateH(p CreateHDeps) gin.HandlerFunc {
 
 func createLinkH(c *gin.Context, p CreateHDeps, url string) {
 	link, err := p.LinkService.CreateLink(c, url)
+	if err == links.ErrBadUrl {
+		p.IndexPage.WithError(c, "Bad url")
+		return
+	}
 	if err != nil {
 		log.Error().Err(err).Msg("error creating link")
 		p.ErrorPage.InternalError(c)
@@ -48,6 +52,10 @@ func createLinkH(c *gin.Context, p CreateHDeps, url string) {
 
 func createQrH(c *gin.Context, p CreateHDeps, url string) {
 	qrCode, err := p.LinkService.CreateQR(c, url)
+	if err == links.ErrBadUrl {
+		p.IndexPage.WithError(c, "Bad url")
+		return
+	}
 	if err != nil {
 		log.Error().Err(err).Msg("error creating qr code")
 		p.ErrorPage.InternalError(c)
