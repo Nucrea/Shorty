@@ -11,8 +11,8 @@ import (
 var htmlFile embed.FS
 
 type TemplateParams struct {
-	Title string
-	Text  string
+	Status int
+	Text   string
 }
 
 func NewPage() *Page {
@@ -28,8 +28,8 @@ type Page struct {
 
 func (p *Page) NotFound(c *gin.Context) {
 	p.pageTemplate.Execute(c.Writer, TemplateParams{
-		Title: "Not found",
-		Text:  "404 Not Found",
+		Status: 404,
+		Text:   "Not Found",
 	})
 	c.Header("Content-Type", "text/html")
 	c.Status(500)
@@ -37,8 +37,8 @@ func (p *Page) NotFound(c *gin.Context) {
 
 func (p *Page) InternalError(c *gin.Context) {
 	p.pageTemplate.Execute(c.Writer, TemplateParams{
-		Title: "Internal Error",
-		Text:  "500 Internal Error",
+		Status: 404,
+		Text:   "Internal Error",
 	})
 	c.Header("Content-Type", "text/html")
 	c.Status(500)
