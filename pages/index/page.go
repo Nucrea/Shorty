@@ -26,13 +26,13 @@ type Page struct {
 }
 
 func (p *Page) Clean(c *gin.Context) {
-	p.pageTemplate.Execute(c.Writer, TemplateParams{})
 	c.Status(200)
 	c.Header("Content-Type", "text/html")
+	p.pageTemplate.Execute(c.Writer, TemplateParams{})
 }
 
 func (p *Page) WithError(c *gin.Context, error string) {
-	p.pageTemplate.Execute(c.Writer, TemplateParams{Error: error})
 	c.Status(200)
 	c.Header("Content-Type", "text/html")
+	p.pageTemplate.Execute(c.Writer, TemplateParams{Error: error})
 }

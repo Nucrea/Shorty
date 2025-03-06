@@ -27,13 +27,13 @@ type Page struct {
 }
 
 func (p *Page) WithQRCode(c *gin.Context, qrCodeBase64 string) {
-	p.pageTemplate.Execute(c.Writer, TemplateParams{QRCode: qrCodeBase64})
 	c.Status(200)
 	c.Header("Content-Type", "text/html")
+	p.pageTemplate.Execute(c.Writer, TemplateParams{QRCode: qrCodeBase64})
 }
 
 func (p *Page) WithLink(c *gin.Context, link string) {
-	p.pageTemplate.Execute(c.Writer, TemplateParams{Shortlink: link})
 	c.Status(200)
 	c.Header("Content-Type", "text/html")
+	p.pageTemplate.Execute(c.Writer, TemplateParams{Shortlink: link})
 }

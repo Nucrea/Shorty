@@ -65,7 +65,7 @@ func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
 		url = fmt.Sprintf("https://%s", url)
 	}
 
-	shortId := GenerateShortId(10)
+	shortId := NewShortId(10)
 	_, err := s.storage.Create(ctx, shortId, url)
 	if err != nil {
 		return "", err
