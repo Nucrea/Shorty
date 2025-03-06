@@ -26,6 +26,11 @@ func main() {
 		log.Fatal().Msg("empty db url")
 	}
 
+	redisUrl := os.Getenv("SHORTY_REDIS_URL")
+	if redisUrl == "" {
+		log.Fatal().Msg("empty redis url")
+	}
+
 	baseUrl := os.Getenv("SHORTY_BASE_URL")
 	if baseUrl == "" {
 		log.Fatal().Msg("empty base url")
@@ -36,9 +41,11 @@ func main() {
 		log.Fatal().Err(err).Msg("error connecting to postgres")
 	}
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-	})
+	redisOpts, err := redis.ParseURL(redisUrl)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error parsing redis url")
+	}
+	rdb := redis.NewClient(redisOpts)
 
 	linkService := links.NewService(db, baseUrl)
 	banService := ban.NewService(rdb)

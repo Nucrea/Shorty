@@ -18,6 +18,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 RUN chmod +x app
 
 ENV SHORTY_POSTGRES_URL=""
+ENV SHORTY_REDIS_URL=""
 ENV SHORTY_BASE_URL=""
 
 EXPOSE 8081
