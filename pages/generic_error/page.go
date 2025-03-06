@@ -32,12 +32,12 @@ func (p *Page) NotFound(c *gin.Context) {
 		Text:   "Not Found",
 	})
 	c.Header("Content-Type", "text/html")
-	c.Status(500)
+	c.Status(404)
 }
 
 func (p *Page) InternalError(c *gin.Context) {
 	p.pageTemplate.Execute(c.Writer, TemplateParams{
-		Status: 404,
+		Status: 500,
 		Text:   "Internal Error",
 	})
 	c.Header("Content-Type", "text/html")
