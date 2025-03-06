@@ -4,6 +4,7 @@ import (
 	genericerror "shorty/pages/generic_error"
 	"shorty/pages/index"
 	"shorty/pages/result"
+	"shorty/services/ban"
 	"shorty/services/links"
 
 	"github.com/gin-gonic/gin"
@@ -17,10 +18,17 @@ type CreateHDeps struct {
 	ResultPage  *result.Page
 	ErrorPage   *genericerror.Page
 	LinkService *links.Service
+	BanService  *ban.Service
 }
 
 func NewLinkCreateH(p CreateHDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		err := p.BanService.Check(c, c.ClientIP())
+		if err == ban.ErrTooManyRequests {
+			p.ErrorPage.TooMuchRequests(c)
+			return
+		}
+
 		url := c.Query("url")
 		if url == "" {
 			p.IndexPage.WithError(c, "Bad url")

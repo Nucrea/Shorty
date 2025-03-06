@@ -26,20 +26,32 @@ type Page struct {
 	pageTemplate *template.Template
 }
 
+func (p *Page) TooMuchRequests(c *gin.Context) {
+	c.Status(429)
+	p.pageTemplate.Execute(c.Writer, TemplateParams{
+		Status: 429,
+		Text:   "Too Many Requests. Your IP is temporarily banned.",
+	})
+	c.Header("Content-Type", "text/html")
+	c.Abort()
+}
+
 func (p *Page) NotFound(c *gin.Context) {
+	c.Status(404)
 	p.pageTemplate.Execute(c.Writer, TemplateParams{
 		Status: 404,
 		Text:   "Not Found",
 	})
 	c.Header("Content-Type", "text/html")
-	c.Status(404)
+	c.Abort()
 }
 
 func (p *Page) InternalError(c *gin.Context) {
+	c.Status(500)
 	p.pageTemplate.Execute(c.Writer, TemplateParams{
 		Status: 500,
 		Text:   "Internal Error",
 	})
 	c.Header("Content-Type", "text/html")
-	c.Status(500)
+	c.Abort()
 }

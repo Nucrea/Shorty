@@ -7,10 +7,12 @@ import (
 	genericerror "shorty/pages/generic_error"
 	"shorty/pages/index"
 	"shorty/pages/result"
+	"shorty/services/ban"
 	"shorty/services/links"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
@@ -34,7 +36,12 @@ func main() {
 		log.Fatal().Err(err).Msg("error connecting to postgres")
 	}
 
+	rdb := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+
 	linkService := links.NewService(db, baseUrl)
+	banService := ban.NewService(rdb)
 
 	indexPage := index.NewPage()
 	resultPage := result.NewPage()
@@ -42,14 +49,14 @@ func main() {
 
 	server := gin.New()
 
+	server.Use(gin.Recovery())
+	server.Use(gin.Logger())
+
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
 
 	server.Static("/static", "./static")
-
-	server.Use(gin.Recovery())
-	server.Use(gin.Logger())
 
 	server.GET("/", indexPage.Clean)
 	server.GET("/create", handlers.NewLinkCreateH(
@@ -59,6 +66,7 @@ func main() {
 			ResultPage:  resultPage,
 			ErrorPage:   errorPage,
 			LinkService: linkService,
+			BanService:  banService,
 		},
 	))
 	server.GET("/:id", handlers.NewLinkResolveH(
