@@ -18,6 +18,11 @@ pipeline {
     }
 
     stages {
+        stage('Build') {
+            steps {
+                sh "docker build . -t ${env.SHORTY_NAME}"
+            }
+        }
         stage('Prepare DB') {
             steps {
                 sh "docker network create -d bridge ${env.NETWORK_NAME} || true"
@@ -39,11 +44,6 @@ pipeline {
                 sh 'sleep 3'
                 sh "psql ${env.PSQL_URL} -f ./sql/db.sql"
                 sh "for file in ./sql/migrations/*.sql; do psql ${env.PSQL_URL} -f \$file; done"
-            }
-        }
-        stage('Build') {
-            steps {
-                sh "docker build . -t ${env.SHORTY_NAME}"
             }
         }
         stage('Check running') {
@@ -69,13 +69,13 @@ pipeline {
     post {
         always {
             sh "docker stop ${env.SHORTY_NAME} || true"
-            sh "docker rm ${env.SHORTY_NAME} || true"
+            sh "docker rm -v ${env.SHORTY_NAME} || true"
 
             sh "docker stop ${env.POSTGRES_NAME} || true"
-            sh "docker rm ${env.POSTGRES_NAME} || true"
+            sh "docker rm -v ${env.POSTGRES_NAME} || true"
 
             sh "docker stop ${env.REDIS_NAME} || true"
-            sh "docker rm ${env.REDIS_NAME} || true"
+            sh "docker rm -v ${env.REDIS_NAME} || true"
 
             sh "docker network rm ${env.NETWORK_NAME} || true"
         }

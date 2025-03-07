@@ -2,15 +2,16 @@
 
 SHORTY_RANDOM_PORT="""${ 10000 + Math.abs(new Random().nextInt(50000)) }"""
 POSTGRES_RANDOM_PORT="""${ 10000 + Math.abs(new Random().nextInt(50000)) }"""
+def RunId = UUID.randomUUID().toString()
 
 pipeline {
     agent any
 
     environment {
-        SHORTY_NAME="shorty-${env.JOB_NAME}-${env.BUILD_ID}"
-        POSTGRES_NAME="shorty-pg-${env.JOB_NAME}-${env.BUILD_ID}"
-        REDIS_NAME="shorty-redis-${env.JOB_NAME}-${env.BUILD_ID}"
-        NETWORK_NAME="shorty-network-${env.JOB_NAME}-${env.BUILD_ID}"
+        SHORTY_NAME="shorty-${RunId}"
+        POSTGRES_NAME="shorty-pg-${RunId}"
+        REDIS_NAME="shorty-redis-${RunId}"
+        NETWORK_NAME="shorty-network-${RunId}"
 
         PSQL_URL="postgres://test:test@localhost:${POSTGRES_RANDOM_PORT}/test"
         SHORTY_POSTGRES_URL="postgres://test:test@${env.POSTGRES_NAME}:5432/test"
@@ -18,6 +19,11 @@ pipeline {
     }
 
     stages {
+        stage('Build') {
+            steps {
+                sh "docker build . -t ${env.SHORTY_NAME}"
+            }
+        }
         stage('Prepare DB') {
             steps {
                 sh "docker network create -d bridge ${env.NETWORK_NAME} || true"
@@ -39,11 +45,6 @@ pipeline {
                 sh 'sleep 3'
                 sh "psql ${env.PSQL_URL} -f ./sql/db.sql"
                 sh "for file in ./sql/migrations/*.sql; do psql ${env.PSQL_URL} -f \$file; done"
-            }
-        }
-        stage('Build') {
-            steps {
-                sh "docker build . -t ${env.SHORTY_NAME}"
             }
         }
         stage('Check running') {
@@ -69,15 +70,16 @@ pipeline {
     post {
         always {
             sh "docker stop ${env.SHORTY_NAME} || true"
-            sh "docker rm ${env.SHORTY_NAME} || true"
+            sh "docker rm -v ${env.SHORTY_NAME} || true"
 
             sh "docker stop ${env.POSTGRES_NAME} || true"
-            sh "docker rm ${env.POSTGRES_NAME} || true"
+            sh "docker rm -v ${env.POSTGRES_NAME} || true"
 
             sh "docker stop ${env.REDIS_NAME} || true"
-            sh "docker rm ${env.REDIS_NAME} || true"
+            sh "docker rm -v ${env.REDIS_NAME} || true"
 
             sh "docker network rm ${env.NETWORK_NAME} || true"
+            sh "docker image rm ${env.SHORTY_NAME} || true"
         }
     }
 }
