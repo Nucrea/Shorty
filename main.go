@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 	"shorty/server"
-	"shorty/src/services/ban"
 	"shorty/src/services/links"
+	"shorty/src/services/ratelimit"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
@@ -34,13 +34,13 @@ func main() {
 	rdb := redis.NewClient(redisOpts)
 
 	linksService := links.NewService(db, conf.AppUrl)
-	banService := ban.NewService(rdb)
+	ratelimitService := ratelimit.NewService(rdb)
 
 	server.Run(server.ServerOpts{
-		Port:         uint16(conf.AppPort),
-		AppUrl:       conf.AppUrl,
-		Log:          &log,
-		LinksService: linksService,
-		BanService:   banService,
+		Port:             uint16(conf.AppPort),
+		AppUrl:           conf.AppUrl,
+		Log:              &log,
+		LinksService:     linksService,
+		RatelimitService: ratelimitService,
 	})
 }

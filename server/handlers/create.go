@@ -4,8 +4,8 @@ import (
 	genericerror "shorty/server/pages/generic_error"
 	"shorty/server/pages/index"
 	"shorty/server/pages/result"
-	"shorty/src/services/ban"
 	"shorty/src/services/links"
+	"shorty/src/services/ratelimit"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -13,19 +13,23 @@ import (
 )
 
 type CreateHDeps struct {
-	Log         *zerolog.Logger
-	IndexPage   *index.Page
-	ResultPage  *result.Page
-	ErrorPage   *genericerror.Page
-	LinkService *links.Service
-	BanService  *ban.Service
+	Log              *zerolog.Logger
+	IndexPage        *index.Page
+	ResultPage       *result.Page
+	ErrorPage        *genericerror.Page
+	LinkService      *links.Service
+	RatelimitService *ratelimit.Service
 }
 
 func NewLinkCreateH(p CreateHDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := p.BanService.Check(c, c.ClientIP())
-		if err == ban.ErrTooManyRequests {
+		err := p.RatelimitService.Check(c, c.ClientIP())
+		if err == ratelimit.ErrTooManyRequests {
 			p.ErrorPage.TooMuchRequests(c)
+			return
+		}
+		if err == ratelimit.ErrTemporaryBanned {
+			p.ErrorPage.TemporarilyBanned(c)
 			return
 		}
 

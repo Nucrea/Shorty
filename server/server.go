@@ -10,8 +10,8 @@ import (
 	genericerror "shorty/server/pages/generic_error"
 	"shorty/server/pages/index"
 	"shorty/server/pages/result"
-	"shorty/src/services/ban"
 	"shorty/src/services/links"
+	"shorty/src/services/ratelimit"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -21,11 +21,11 @@ import (
 var staticFS embed.FS
 
 type ServerOpts struct {
-	Port         uint16
-	AppUrl       string
-	Log          *zerolog.Logger
-	LinksService *links.Service
-	BanService   *ban.Service
+	Port             uint16
+	AppUrl           string
+	Log              *zerolog.Logger
+	LinksService     *links.Service
+	RatelimitService *ratelimit.Service
 }
 
 func Run(opts ServerOpts) {
@@ -52,12 +52,12 @@ func Run(opts ServerOpts) {
 	server.GET("/", indexPage.Clean)
 	server.GET("/create", handlers.NewLinkCreateH(
 		handlers.CreateHDeps{
-			Log:         opts.Log,
-			IndexPage:   indexPage,
-			ResultPage:  resultPage,
-			ErrorPage:   errorPage,
-			LinkService: opts.LinksService,
-			BanService:  opts.BanService,
+			Log:              opts.Log,
+			IndexPage:        indexPage,
+			ResultPage:       resultPage,
+			ErrorPage:        errorPage,
+			LinkService:      opts.LinksService,
+			RatelimitService: opts.RatelimitService,
 		},
 	))
 	server.GET("/:id", handlers.NewLinkResolveH(
