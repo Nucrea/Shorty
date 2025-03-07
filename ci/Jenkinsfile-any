@@ -1,0 +1,83 @@
+#!groovy
+
+SHORTY_RANDOM_PORT="""${ 10000 + Math.abs(new Random().nextInt(50000)) }"""
+POSTGRES_RANDOM_PORT="""${ 10000 + Math.abs(new Random().nextInt(50000)) }"""
+
+pipeline {
+    agent any
+
+    environment {
+        SHORTY_NAME="shorty-${env.JOB_NAME}-${env.BUILD_ID}"
+        POSTGRES_NAME="shorty-pg-${env.JOB_NAME}-${env.BUILD_ID}"
+        REDIS_NAME="shorty-redis-${env.JOB_NAME}-${env.BUILD_ID}"
+        NETWORK_NAME="shorty-network-${env.JOB_NAME}-${env.BUILD_ID}"
+
+        PSQL_URL="postgres://test:test@localhost:${POSTGRES_RANDOM_PORT}/test"
+        SHORTY_POSTGRES_URL="postgres://test:test@${env.POSTGRES_NAME}:5432/test"
+        SHORTY_REDIS_URL="redis://${env.REDIS_NAME}:6379"
+    }
+
+    stages {
+        stage('Prepare DB') {
+            steps {
+                sh "docker network create -d bridge ${env.NETWORK_NAME} || true"
+
+                sh "docker run -d \
+                    --network=${env.NETWORK_NAME} \
+                    --name=${env.POSTGRES_NAME} \
+                    -p ${POSTGRES_RANDOM_PORT}:5432 \
+                    -e POSTGRES_DB=test \
+                    -e POSTGRES_USER=test \
+                    -e POSTGRES_PASSWORD=test \
+                    -d postgres:16.4-alpine"
+                
+                sh "docker run -d \
+                    --network=${env.NETWORK_NAME} \
+                    --name=${env.REDIS_NAME} \
+                    -d redis:7.4.2-alpine"
+
+                sh 'sleep 3'
+                sh "psql ${env.PSQL_URL} -f ./sql/db.sql"
+                sh "for file in ./sql/migrations/*.sql; do psql ${env.PSQL_URL} -f \$file; done"
+            }
+        }
+        stage('Build') {
+            steps {
+                sh "docker build . -t ${env.SHORTY_NAME}"
+            }
+        }
+        stage('Check running') {
+            steps {
+                sh "docker stop ${env.SHORTY_NAME} || true"
+                sh "docker rm ${env.SHORTY_NAME} || true"
+
+                sh "docker run \
+                    --name=${env.SHORTY_NAME} \
+                    --network=${env.NETWORK_NAME} \
+                    -p ${SHORTY_RANDOM_PORT}:8081 \
+                    -e SHORTY_POSTGRES_URL=${env.SHORTY_POSTGRES_URL} \
+                    -e SHORTY_REDIS_URL=${env.SHORTY_REDIS_URL} \
+                    -e SHORTY_BASE_URL=http://127.0.0.1 \
+                    -d ${env.SHORTY_NAME}"
+                
+                sh 'sleep 1'
+                sh "curl http://127.0.0.1:${SHORTY_RANDOM_PORT}/health"
+            }
+        }
+    }
+
+    post {
+        always {
+            sh "docker stop ${env.SHORTY_NAME} || true"
+            sh "docker rm ${env.SHORTY_NAME} || true"
+
+            sh "docker stop ${env.POSTGRES_NAME} || true"
+            sh "docker rm ${env.POSTGRES_NAME} || true"
+
+            sh "docker stop ${env.REDIS_NAME} || true"
+            sh "docker rm ${env.REDIS_NAME} || true"
+
+            sh "docker network rm ${env.NETWORK_NAME} || true"
+        }
+    }
+}
