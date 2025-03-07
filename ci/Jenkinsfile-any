@@ -2,15 +2,16 @@
 
 SHORTY_RANDOM_PORT="""${ 10000 + Math.abs(new Random().nextInt(50000)) }"""
 POSTGRES_RANDOM_PORT="""${ 10000 + Math.abs(new Random().nextInt(50000)) }"""
+def RunId = UUID.randomUUID().toString()
 
 pipeline {
     agent any
 
     environment {
-        SHORTY_NAME="shorty-dev-${env.BUILD_ID}"
-        POSTGRES_NAME="shorty-pg-dev-${env.BUILD_ID}"
-        REDIS_NAME="shorty-redis-dev-${env.BUILD_ID}"
-        NETWORK_NAME="shorty-network-dev-${env.BUILD_ID}"
+        SHORTY_NAME="shorty-${RunId}"
+        POSTGRES_NAME="shorty-pg-${RunId}"
+        REDIS_NAME="shorty-redis-${RunId}"
+        NETWORK_NAME="shorty-network-${RunId}"
 
         PSQL_URL="postgres://test:test@localhost:${POSTGRES_RANDOM_PORT}/test"
         SHORTY_POSTGRES_URL="postgres://test:test@${env.POSTGRES_NAME}:5432/test"
@@ -79,6 +80,7 @@ pipeline {
             sh "docker rm -v ${env.REDIS_NAME} || true"
 
             sh "docker network rm ${env.NETWORK_NAME} || true"
+            sh "docker image rm ${env.SHORTY_NAME} || true"
         }
     }
 }

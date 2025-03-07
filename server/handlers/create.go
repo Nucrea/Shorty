@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	genericerror "shorty/pages/generic_error"
-	"shorty/pages/index"
-	"shorty/pages/result"
-	"shorty/services/ban"
-	"shorty/services/links"
+	genericerror "shorty/server/pages/generic_error"
+	"shorty/server/pages/index"
+	"shorty/server/pages/result"
+	"shorty/src/services/ban"
+	"shorty/src/services/links"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"

@@ -21,18 +21,18 @@ var (
 	ErrNoSuchLink = fmt.Errorf("no such link")
 )
 
-func NewService(pgConn *pgx.Conn, baseUrl string) *Service {
+func NewService(pgConn *pgx.Conn, appUrl string) *Service {
 	shortIdRegexp := regexp.MustCompile(`^\w{10}$`)
 	return &Service{
 		shortIdRegexp: shortIdRegexp,
-		baseUrl:       baseUrl,
+		appUrl:        appUrl,
 		storage:       NewStorage(pgConn),
 	}
 }
 
 type Service struct {
 	shortIdRegexp *regexp.Regexp
-	baseUrl       string
+	appUrl        string
 	storage       *Storage
 }
 
@@ -70,7 +70,7 @@ func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s/%s", s.baseUrl, shortId), nil
+	return fmt.Sprintf("%s/%s", s.appUrl, shortId), nil
 }
 
 func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
