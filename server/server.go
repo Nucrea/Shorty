@@ -33,10 +33,11 @@ func Run(opts ServerOpts) {
 	resultPage := result.NewPage()
 	errorPage := genericerror.NewPage()
 
+	gin.SetMode(gin.ReleaseMode)
 	server := gin.New()
 
 	server.Use(gin.Recovery())
-	server.Use(gin.Logger())
+	server.Use(RequestLogM(opts.Log))
 
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
@@ -68,5 +69,6 @@ func Run(opts ServerOpts) {
 		},
 	))
 
+	opts.Log.Info().Msgf("Started server on port %d", opts.Port)
 	server.Run(fmt.Sprintf(":%d", opts.Port))
 }
