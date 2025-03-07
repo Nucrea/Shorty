@@ -13,9 +13,12 @@ type Config struct {
 	AppPort     uint16
 	PostgresUrl string
 	RedisUrl    string
+	LogFile     string
 }
 
 func NewConfig() (*Config, error) {
+	logFile := os.Getenv("SHORTY_LOG_FILE")
+
 	pgUrl := os.Getenv("SHORTY_POSTGRES_URL")
 	if pgUrl == "" {
 		return nil, fmt.Errorf("empty postgres url")
@@ -57,5 +60,6 @@ func NewConfig() (*Config, error) {
 		AppPort:     uint16(appPort),
 		PostgresUrl: pgUrl,
 		RedisUrl:    redisUrl,
+		LogFile:     logFile,
 	}, nil
 }

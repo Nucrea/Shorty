@@ -37,11 +37,7 @@ func Run(opts ServerOpts) {
 
 	gin.SetMode(gin.ReleaseMode)
 	server := gin.New()
-
 	server.Use(gin.Recovery())
-	server.Use(RequestLogM(opts.Log))
-	server.Use(TracingM(opts.Tracer))
-
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
@@ -51,6 +47,9 @@ func Run(opts ServerOpts) {
 		log.Fatal(err)
 	}
 	server.StaticFS("/static", http.FS(staticDir))
+
+	server.Use(RequestLogM(opts.Log))
+	server.Use(TracingM(opts.Tracer))
 
 	server.GET("/", indexPage.Clean)
 	server.GET("/create", handlers.NewLinkCreateH(
