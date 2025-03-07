@@ -48,7 +48,7 @@ func main() {
 	}
 	rdb := redis.NewClient(redisOpts)
 
-	tracer, err := tracing.NewTracer("http://localhost:4318")
+	tracer, err := tracing.NewTracer(conf.OTELUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error init tracer")
 	}

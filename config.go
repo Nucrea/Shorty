@@ -14,6 +14,7 @@ type Config struct {
 	PostgresUrl string
 	RedisUrl    string
 	LogFile     string
+	OTELUrl     string
 }
 
 func NewConfig() (*Config, error) {
@@ -25,6 +26,14 @@ func NewConfig() (*Config, error) {
 	}
 	if _, err := url.Parse(pgUrl); err != nil {
 		return nil, fmt.Errorf("bad postgres url")
+	}
+
+	otelUrl := os.Getenv("SHORTY_OPENTELEMETRY_URL")
+	if otelUrl == "" {
+		return nil, fmt.Errorf("empty otel url")
+	}
+	if _, err := url.Parse(otelUrl); err != nil {
+		return nil, fmt.Errorf("bad otel url")
 	}
 
 	redisUrl := os.Getenv("SHORTY_REDIS_URL")
@@ -61,5 +70,6 @@ func NewConfig() (*Config, error) {
 		PostgresUrl: pgUrl,
 		RedisUrl:    redisUrl,
 		LogFile:     logFile,
+		OTELUrl:     otelUrl,
 	}, nil
 }
