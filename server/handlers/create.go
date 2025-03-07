@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	genericerror "shorty/pages/generic_error"
-	"shorty/pages/index"
-	"shorty/pages/result"
+	genericerror "shorty/server/pages/generic_error"
+	"shorty/server/pages/index"
+	"shorty/server/pages/result"
 	"shorty/services/ban"
 	"shorty/services/links"
 

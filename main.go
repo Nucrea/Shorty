@@ -2,15 +2,13 @@ package main
 
 import (
 	"context"
+	"math"
 	"os"
-	"shorty/handlers"
-	genericerror "shorty/pages/generic_error"
-	"shorty/pages/index"
-	"shorty/pages/result"
+	"shorty/server"
 	"shorty/services/ban"
 	"shorty/services/links"
+	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
@@ -36,6 +34,18 @@ func main() {
 		log.Fatal().Msg("empty base url")
 	}
 
+	appPortEnv := os.Getenv("SHORTY_APP_PORT")
+	if appPortEnv == "" {
+		log.Fatal().Msg("empty app port")
+	}
+	appPort, err := strconv.Atoi(appPortEnv)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error parsing app port")
+	}
+	if appPort > math.MaxUint16 {
+		log.Fatal().Msg("app port is out of range")
+	}
+
 	db, err := pgx.Connect(ctx, pgUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error connecting to postgres")
@@ -47,43 +57,14 @@ func main() {
 	}
 	rdb := redis.NewClient(redisOpts)
 
-	linkService := links.NewService(db, baseUrl)
+	linksService := links.NewService(db, baseUrl)
 	banService := ban.NewService(rdb)
 
-	indexPage := index.NewPage()
-	resultPage := result.NewPage()
-	errorPage := genericerror.NewPage()
-
-	server := gin.New()
-
-	server.Use(gin.Recovery())
-	server.Use(gin.Logger())
-
-	server.GET("/health", func(ctx *gin.Context) {
-		ctx.Status(200)
+	server.Run(server.ServerOpts{
+		Port:         uint16(appPort),
+		BaseUrl:      baseUrl,
+		Log:          &log,
+		LinksService: linksService,
+		BanService:   banService,
 	})
-
-	server.Static("/static", "./static")
-
-	server.GET("/", indexPage.Clean)
-	server.GET("/create", handlers.NewLinkCreateH(
-		handlers.CreateHDeps{
-			Log:         &log,
-			IndexPage:   indexPage,
-			ResultPage:  resultPage,
-			ErrorPage:   errorPage,
-			LinkService: linkService,
-			BanService:  banService,
-		},
-	))
-	server.GET("/:id", handlers.NewLinkResolveH(
-		handlers.ResolveHDeps{
-			BaseUrl:     baseUrl,
-			Log:         &log,
-			LinkService: linkService,
-			ErrorPage:   errorPage,
-		},
-	))
-
-	server.Run(":8081")
 }

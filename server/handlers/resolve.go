@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	genericerror "shorty/pages/generic_error"
+	genericerror "shorty/server/pages/generic_error"
 	"shorty/services/links"
 
 	"github.com/gin-gonic/gin"
