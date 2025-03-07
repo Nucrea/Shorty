@@ -9,11 +9,10 @@ import (
 )
 
 type Config struct {
-	AppUrl           string
-	AppPort          uint16
-	PostgresUrl      string
-	RedisUrl         string
-	ElasticsearchUrl string
+	AppUrl      string
+	AppPort     uint16
+	PostgresUrl string
+	RedisUrl    string
 }
 
 func NewConfig() (*Config, error) {
@@ -41,14 +40,6 @@ func NewConfig() (*Config, error) {
 		return nil, fmt.Errorf("bad app url")
 	}
 
-	esUrl := os.Getenv("SHORTY_ELASTICSEARCH_URL")
-	if esUrl == "" {
-		return nil, fmt.Errorf("empty elasticsearch url")
-	}
-	if _, err := url.Parse(esUrl); err != nil {
-		return nil, fmt.Errorf("bad es url")
-	}
-
 	appPortEnv := os.Getenv("SHORTY_APP_PORT")
 	if appPortEnv == "" {
 		return nil, fmt.Errorf("empty app port")
@@ -62,10 +53,9 @@ func NewConfig() (*Config, error) {
 	}
 
 	return &Config{
-		AppUrl:           baseUrl,
-		AppPort:          uint16(appPort),
-		PostgresUrl:      pgUrl,
-		RedisUrl:         redisUrl,
-		ElasticsearchUrl: esUrl,
+		AppUrl:      appUrl,
+		AppPort:     uint16(appPort),
+		PostgresUrl: pgUrl,
+		RedisUrl:    redisUrl,
 	}, nil
 }
