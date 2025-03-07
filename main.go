@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 	"shorty/server"
-	"shorty/services/ban"
-	"shorty/services/links"
+	"shorty/src/services/ban"
+	"shorty/src/services/links"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"

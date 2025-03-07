@@ -10,8 +10,8 @@ import (
 	genericerror "shorty/server/pages/generic_error"
 	"shorty/server/pages/index"
 	"shorty/server/pages/result"
-	"shorty/services/ban"
-	"shorty/services/links"
+	"shorty/src/services/ban"
+	"shorty/src/services/links"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"

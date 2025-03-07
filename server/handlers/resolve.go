@@ -2,7 +2,7 @@ package handlers
 
 import (
 	genericerror "shorty/server/pages/generic_error"
-	"shorty/services/links"
+	"shorty/src/services/links"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
