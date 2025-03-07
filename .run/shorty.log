@@ -1,0 +1,144 @@
+{"level":"info","message":"Started server on port 8081"}
+{"level":"info","message":"GET / 200 51.083µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 12.00768ms"}
+{"level":"info","message":"GET / 200 53.353µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 182.764µs"}
+{"level":"info","message":"GET / 200 28.678µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 234.725µs"}
+{"level":"info","message":"GET / 200 31.824µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 105.752µs"}
+{"level":"info","message":"GET / 200 29.511µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 100.059µs"}
+{"level":"info","message":"GET / 200 30.102µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 124.742µs"}
+{"level":"info","message":"GET / 200 29.902µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 107.795µs"}
+{"level":"info","message":"GET / 200 52.95µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 235.362µs"}
+{"level":"info","message":"GET / 200 28.506µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 246.547µs"}
+{"level":"info","message":"GET / 200 31.448µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 117.128µs"}
+{"level":"info","message":"GET / 200 28.467µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 160.959µs"}
+{"level":"info","message":"GET / 200 28.375µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 288.551µs"}
+{"level":"info","message":"GET / 200 35.511µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 133.029µs"}
+{"level":"info","message":"Started server on port 8081"}
+{"level":"info","message":"GET / 200 69.236µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 6.151162ms"}
+{"level":"info","message":"GET / 200 33.349µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 292.961µs"}
+{"level":"info","message":"GET / 200 54.061µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 230.764µs"}
+{"level":"info","message":"GET / 200 33.553µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 145.183µs"}
+{"level":"info","message":"GET / 200 58.661µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 150.504µs"}
+{"level":"info","message":"Started server on port 8081"}
+{"level":"info","message":"GET / 200 42.687µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 6.137553ms"}
+{"level":"info","message":"GET / 200 52.576µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 5.806474ms"}
+{"level":"info","message":"GET / 200 63.23µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 170.187µs"}
+{"level":"info","message":"GET / 200 57.571µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 100.975µs"}
+{"level":"info","message":"GET / 200 53.556µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 119.529µs"}
+{"level":"info","message":"GET / 200 30.649µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 10.442049ms"}
+{"level":"info","message":"GET / 200 30.517µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 107.427µs"}
+{"level":"info","message":"GET / 200 32.042µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 474.053µs"}
+{"level":"info","message":"GET / 200 35.154µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 155.528µs"}
+{"level":"info","message":"GET / 200 30.141µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 137.925µs"}
+{"level":"info","message":"GET / 200 72.667µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 282.269µs"}
+{"level":"info","message":"GET / 200 33.612µs"}
+{"level":"info","message":"GET /static/favicon.ico 200 267.269µs"}
+{"level":"info","time":"2025-03-07T18:07:11+03:00","message":"Started server on port 8081"}
+{"level":"info","time":"2025-03-07T18:08:39+03:00","message":"GET / 200 77.609µs"}
+{"level":"info","time":"2025-03-07T18:08:39+03:00","message":"GET /static/favicon.ico 200 111.953325ms"}
+{"level":"info","time":"2025-03-07T18:08:41+03:00","message":"GET / 200 74.805µs"}
+{"level":"info","time":"2025-03-07T18:08:42+03:00","message":"GET /static/favicon.ico 200 121.622µs"}
+{"level":"info","time":"2025-03-07T18:09:05+03:00","message":"GET / 200 66.063µs"}
+{"level":"info","time":"2025-03-07T18:09:05+03:00","message":"GET /static/favicon.ico 200 100.641µs"}
+{"level":"info","time":"2025-03-07T18:12:01+03:00","message":"GET / 200 45.316µs"}
+{"level":"info","time":"2025-03-07T18:12:01+03:00","message":"GET /static/favicon.ico 200 183.157µs"}
+{"level":"info","time":"2025-03-07T18:23:01+03:00","message":"Started server on port 8081"}
+{"level":"info","time":"2025-03-07T18:23:31+03:00","message":"Started server on port 8081"}
+{"level":"info","request_id":"ea554686-530d-444b-9a2a-e7aa316bae9e","method":"GET","path":"/","status":200,"duration":0.053411,"time":"2025-03-07T18:23:36+03:00"}
+{"level":"info","request_id":"72348800-e42d-486e-955e-cd4f1d0e501f","method":"GET","path":"/static/favicon.ico","status":200,"duration":6.62261,"time":"2025-03-07T18:23:36+03:00"}
+{"level":"info","time":"2025-03-07T18:54:26+03:00","message":"Started server on port 8081"}
+{"level":"info","request_id":"65b6e7b5-6788-446b-87a0-d31a0c88dede","method":"GET","path":"/","status":200,"duration":0.180896,"time":"2025-03-07T18:54:40+03:00"}
+{"level":"info","request_id":"2da70189-0b32-436a-a8d4-c1b7083cbae0","method":"GET","path":"/static/favicon.ico","status":200,"duration":13.798399,"time":"2025-03-07T18:54:40+03:00"}
+{"level":"info","request_id":"37c0588f-96db-4c87-bcb3-73c5ceb34c25","method":"GET","path":"/create?url=ya.ru","status":200,"duration":79.119474,"time":"2025-03-07T18:54:45+03:00"}
+{"level":"info","request_id":"052167c9-dbc1-4239-81c6-7424af790874","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.138282,"time":"2025-03-07T18:54:45+03:00"}
+{"level":"info","request_id":"48f0ee16-71b8-46db-b88c-f401a9d95e20","method":"GET","path":"/create?url=ya.ru","status":200,"duration":14.766805,"time":"2025-03-07T18:54:47+03:00"}
+{"level":"info","request_id":"b19779bf-6ba6-43da-89fb-b741b68dbfcb","method":"GET","path":"/static/favicon.ico","status":200,"duration":56.159734,"time":"2025-03-07T18:54:47+03:00"}
+{"level":"info","request_id":"37b85e5a-c888-4397-a09d-ec520b03bf37","method":"GET","path":"/create?url=ya.ru","status":200,"duration":17.149504,"time":"2025-03-07T18:54:48+03:00"}
+{"level":"info","request_id":"122a8c1a-3486-4d83-94d3-5550874a308b","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.100126,"time":"2025-03-07T18:54:48+03:00"}
+{"level":"info","request_id":"bf2845bd-5651-4ffc-877d-5bea96ca94e8","method":"GET","path":"/create?url=ya.ru","status":200,"duration":20.001153,"time":"2025-03-07T18:54:48+03:00"}
+{"level":"info","request_id":"7ac54291-6010-4c45-b280-d983e5971016","method":"GET","path":"/static/favicon.ico","status":200,"duration":4.062876,"time":"2025-03-07T18:54:49+03:00"}
+{"level":"info","request_id":"e48f9c3c-767e-4262-8c75-bea44a7eb552","method":"GET","path":"/create?url=ya.ru","status":200,"duration":15.825968,"time":"2025-03-07T18:56:19+03:00"}
+{"level":"info","request_id":"f4fe35a6-89b3-4318-933c-c689dda242ab","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.123068,"time":"2025-03-07T18:56:19+03:00"}
+{"level":"info","request_id":"07a49a6f-e2c4-42c8-80c0-39afd7415245","method":"GET","path":"/create?url=ya.ru","status":200,"duration":17.581741,"time":"2025-03-07T18:56:20+03:00"}
+{"level":"info","request_id":"539f66e1-2ca4-4c58-8a70-5303b1a92bc5","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.205973,"time":"2025-03-07T18:56:20+03:00"}
+{"level":"info","request_id":"a0427deb-ac5b-4425-9219-05e0ae0e8f8d","method":"GET","path":"/create?url=ya.ru","status":200,"duration":16.479223,"time":"2025-03-07T18:56:21+03:00"}
+{"level":"info","request_id":"ffe87cf3-6375-49ca-a249-2ce94085520d","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.209383,"time":"2025-03-07T18:56:21+03:00"}
+{"level":"info","time":"2025-03-07T18:57:26+03:00","message":"Started server on port 8081"}
+{"level":"info","request_id":"f4933d6e-6a53-4b63-9d0c-9ee7aba202ce","method":"GET","path":"/create?url=ya.ru","status":200,"duration":19.16462,"time":"2025-03-07T18:57:29+03:00"}
+{"level":"info","request_id":"9d67d4f4-64ad-484c-b4ee-04cb8e977414","method":"GET","path":"/static/favicon.ico","status":200,"duration":3.766929,"time":"2025-03-07T18:57:29+03:00"}
+{"level":"info","request_id":"f1dc09fb-416e-48ae-8a65-89e28eb460e5","method":"GET","path":"/create?url=ya.ru","status":200,"duration":17.710829,"time":"2025-03-07T18:57:31+03:00"}
+{"level":"info","request_id":"a270fcc3-930b-4525-907b-c68f2625c41a","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.241548,"time":"2025-03-07T18:57:31+03:00"}
+{"level":"info","request_id":"c7ec0391-71dd-419f-a23d-9aa31525e0a8","method":"GET","path":"/create?url=ya.ru","status":200,"duration":14.169323,"time":"2025-03-07T18:58:07+03:00"}
+{"level":"info","request_id":"0674f5b8-67c5-4f9f-954d-40ca4c0b2712","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.173845,"time":"2025-03-07T18:58:07+03:00"}
+{"level":"info","request_id":"b0bd3a4b-9b38-492b-834a-80c803e10ce4","method":"GET","path":"/create?url=ya.ru","status":200,"duration":18.557748,"time":"2025-03-07T18:58:08+03:00"}
+{"level":"info","request_id":"523c1dcd-5ded-4fdd-b1e1-ea1fd59bbf79","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.306313,"time":"2025-03-07T18:58:08+03:00"}
+{"level":"info","request_id":"097b1e6c-e7cd-4a5d-b2c4-ef6ac07df8a2","method":"GET","path":"/create?url=ya.ru","status":200,"duration":18.565004,"time":"2025-03-07T18:58:08+03:00"}
+{"level":"info","request_id":"5bbc7008-909d-4f75-93e5-5fc2d31afa66","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.311676,"time":"2025-03-07T18:58:08+03:00"}
+{"level":"info","time":"2025-03-07T18:58:14+03:00","message":"Started server on port 8081"}
+{"level":"info","request_id":"d7192803-5f5d-4e18-b39b-24f75a84e926","method":"GET","path":"/create?url=ya.ru","status":200,"duration":37.107558,"time":"2025-03-07T18:58:16+03:00"}
+{"level":"info","request_id":"cc41627a-bfc2-48e5-b007-4fd88ac6f10c","method":"GET","path":"/static/favicon.ico","status":200,"duration":10.291666,"time":"2025-03-07T18:58:17+03:00"}
+{"level":"info","time":"2025-03-07T19:02:59+03:00","message":"Started server on port 8081"}
+{"level":"info","request_id":"1f42974b-66d0-4fb7-b803-1b75923bcd51","method":"GET","path":"/create?url=ya.ru","status":200,"duration":43.818566,"time":"2025-03-07T19:02:59+03:00"}
+{"level":"info","request_id":"8c1bd0fb-836a-4c1f-b1b4-549e29791869","method":"GET","path":"/static/favicon.ico","status":200,"duration":28.766349,"time":"2025-03-07T19:02:59+03:00"}
+{"level":"info","request_id":"dfefb064-a218-434d-b61c-355cc106e705","method":"GET","path":"/create?url=ya.ru","status":200,"duration":12.414546,"time":"2025-03-07T19:03:02+03:00"}
+{"level":"info","request_id":"e9bb7b81-0e91-4d34-935d-01116c5ca45c","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.136796,"time":"2025-03-07T19:03:02+03:00"}
+{"level":"info","request_id":"bc609a4a-2736-4df1-a8a5-98da6bfcd13a","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.607072,"time":"2025-03-07T19:03:02+03:00"}
+{"level":"info","request_id":"c01262b6-434b-4812-88ce-6388732bce7b","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.613714,"time":"2025-03-07T19:03:02+03:00"}
+{"level":"info","request_id":"8725fbdf-a289-4295-994a-24abcfe9f2ff","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.018971,"time":"2025-03-07T19:03:02+03:00"}
+{"level":"info","request_id":"6d3983f2-08c3-426a-8445-ffdab3133859","method":"GET","path":"/static/favicon.ico","status":200,"duration":1.064701,"time":"2025-03-07T19:03:02+03:00"}
+{"level":"info","request_id":"b1861f20-91e0-4243-9152-a7dc812ba4a2","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.05967,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"6021a393-9731-43f2-baf9-0ac80f383a02","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.127307,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"332e89f7-0625-4f58-a005-bcea3c7c0f1e","method":"GET","path":"/create?url=ya.ru","status":200,"duration":5.398888,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"994455b9-00c2-49da-98c9-174a3324b7bc","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.238317,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"09300b6f-d793-4324-b20d-117fc735c39f","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.929202,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"780ba910-f12d-48ef-8688-07bb589b6e1a","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.267192,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"c186ad25-c6ce-49a0-963c-82c37321000f","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.423897,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"e3360200-a44e-4adf-8148-e560995f1a88","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.196455,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"7048fdd2-e3a9-4c1f-a2fc-69b4967c2761","method":"GET","path":"/create?url=ya.ru","status":200,"duration":5.381465,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"e544618f-9dc6-41ea-bdc0-86e95fcf8c0e","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.315539,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"44ba39e9-e8bf-4f1f-9fbe-6423a7c454f3","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.359729,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"56a35960-779b-43c6-9fec-a3a72457a0c1","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.243093,"time":"2025-03-07T19:03:03+03:00"}
+{"level":"info","request_id":"ee6cb3f7-686a-4882-b140-505b66cd06ab","method":"GET","path":"/create?url=ya.ru","status":200,"duration":7.066267,"time":"2025-03-07T19:03:04+03:00"}
+{"level":"info","request_id":"d68bb013-5181-4a00-998f-352368e8d97c","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.251927,"time":"2025-03-07T19:03:04+03:00"}
+{"level":"info","request_id":"4e00a855-6955-4ce6-9e24-8f1b53877ee9","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.63328,"time":"2025-03-07T19:03:04+03:00"}
+{"level":"info","request_id":"8b671924-a40f-49d7-ad49-daaef18dc9a8","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.235078,"time":"2025-03-07T19:03:04+03:00"}
+{"level":"info","request_id":"c512c6d2-6d56-4ae1-940c-a5f370216f35","method":"GET","path":"/create?url=ya.ru","status":200,"duration":19.36464,"time":"2025-03-07T19:05:02+03:00"}
+{"level":"info","request_id":"ed93b824-0333-4de3-9b22-b0ff51be9a29","method":"GET","path":"/static/favicon.ico","status":200,"duration":38.939962,"time":"2025-03-07T19:05:02+03:00"}
+{"level":"info","request_id":"c5492e47-0607-4b95-bcdf-e5c282163e10","method":"GET","path":"/create?url=ya.ru","status":200,"duration":14.912981,"time":"2025-03-07T19:05:03+03:00"}
+{"level":"info","request_id":"e54a5be5-dbc6-4d0c-b5eb-aaffd4b1db60","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.200372,"time":"2025-03-07T19:05:03+03:00"}
+{"level":"info","request_id":"eb6fde12-195f-43f3-ab54-f33570147c12","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.460071,"time":"2025-03-07T19:05:03+03:00"}
+{"level":"info","request_id":"17337a46-9a3b-4f9b-9643-5817626a5adf","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.171783,"time":"2025-03-07T19:05:03+03:00"}
+{"level":"info","request_id":"0325c978-2d0b-4f3f-9ca4-25306197738d","method":"GET","path":"/create?url=ya.ru","status":200,"duration":15.512536,"time":"2025-03-07T19:05:04+03:00"}
+{"level":"info","request_id":"e6f7de6a-42fd-4253-a94f-400a3940ef85","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.275542,"time":"2025-03-07T19:05:04+03:00"}
+{"level":"info","request_id":"096ddfb1-891f-4852-86be-04c6bd222322","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.74717,"time":"2025-03-07T19:05:04+03:00"}
+{"level":"info","request_id":"6176cc42-2ff8-41f0-9ab0-f60530faa47b","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.221351,"time":"2025-03-07T19:05:04+03:00"}
+{"level":"info","request_id":"51bb46fa-4df4-4ed6-a84a-c2361c8d2e9b","method":"GET","path":"/create?url=ya.ru","status":200,"duration":6.726756,"time":"2025-03-07T19:05:04+03:00"}
+{"level":"info","request_id":"1308aa2b-adaa-484c-ac40-71cf5a218aaa","method":"GET","path":"/static/favicon.ico","status":200,"duration":0.159705,"time":"2025-03-07T19:05:04+03:00"}

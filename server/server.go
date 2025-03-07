@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/trace"
 )
 
 //go:embed static/*
@@ -26,6 +27,7 @@ type ServerOpts struct {
 	Log              *zerolog.Logger
 	LinksService     *links.Service
 	RatelimitService *ratelimit.Service
+	Tracer           trace.Tracer
 }
 
 func Run(opts ServerOpts) {
@@ -38,6 +40,7 @@ func Run(opts ServerOpts) {
 
 	server.Use(gin.Recovery())
 	server.Use(RequestLogM(opts.Log))
+	server.Use(TracingM(opts.Tracer))
 
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)

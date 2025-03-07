@@ -14,3 +14,46 @@ services:
     image: redis:7.4.2-alpine
     ports:
       - 6379:6379
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.108.0
+    volumes:
+      - ./deploy/otel.yml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 13133:13133 # health_check extension
+      - 4318:4318 # OTLP http receiver
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    ports:
+      - "3000:3000"
+
+  loki:
+     image: grafana/loki:3.0.0
+     command: -config.file=/etc/loki/local-config.yaml
+
+  alloy:
+    image: grafana/alloy:v1.7.1
+    volumes:
+      - ./deploy/config.alloy:/etc/alloy/config.alloy
+      - ./.run/shorty.log:/var/log/shorty.log:ro"
+    command: 'run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy'
+
+  tempo-init:
+    image: &tempoImage grafana/tempo:r177-60780f7
+    user: root
+    entrypoint: "chown 10001:10001 /var/tempo"
+    volumes:
+      - tempo-volume:/var/tempo
+
+  tempo:
+    image: *tempoImage
+    command: [ "-config.file=/etc/tempo.yml" ]
+    volumes:
+      - ./deploy/tempo.yml:/etc/tempo.yml
+      - tempo-volume:/var/tempo
+    depends_on:
+      - tempo-init
+
+volumes:
+  tempo-volume:

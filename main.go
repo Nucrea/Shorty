@@ -15,7 +15,15 @@ import (
 func main() {
 	ctx := context.Background()
 
-	log := zerolog.New(os.Stdout)
+	file, err := os.OpenFile("./.run/shorty.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
+	if err != nil {
+		panic("error open log file")
+	}
+	defer file.Close()
+
+	writer := zerolog.MultiLevelWriter(os.Stdout, file)
+
+	log := zerolog.New(writer).With().Timestamp().Logger()
 
 	conf, err := NewConfig()
 	if err != nil {
@@ -33,7 +41,12 @@ func main() {
 	}
 	rdb := redis.NewClient(redisOpts)
 
-	linksService := links.NewService(db, conf.AppUrl)
+	tracer, err := NewTracer("http://localhost:4318")
+	if err != nil {
+		log.Fatal().Err(err).Msg("error init tracer")
+	}
+
+	linksService := links.NewService(db, conf.AppUrl, tracer)
 	ratelimitService := ratelimit.NewService(rdb)
 
 	server.Run(server.ServerOpts{
@@ -42,5 +55,6 @@ func main() {
 		Log:              &log,
 		LinksService:     linksService,
 		RatelimitService: ratelimitService,
+		Tracer:           tracer,
 	})
 }
