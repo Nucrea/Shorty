@@ -40,7 +40,7 @@
         "showCommonLabels": false,
         "showLabels": false,
         "showTime": false,
-        "sortOrder": "Descending",
+        "sortOrder": "Ascending",
         "wrapLogMessage": false
       },
       "targets": [
@@ -150,6 +150,6 @@
   "timezone": "browser",
   "title": "New dashboard",
   "uid": "def52gmyckirkd",
-  "version": 3,
+  "version": 2,
   "weekStart": ""
 }

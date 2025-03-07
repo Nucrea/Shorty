@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type CreateHDeps struct {
@@ -19,6 +20,7 @@ type CreateHDeps struct {
 	ErrorPage        *genericerror.Page
 	LinkService      *links.Service
 	RatelimitService *ratelimit.Service
+	Tracer           trace.Tracer
 }
 
 func NewLinkCreateH(p CreateHDeps) gin.HandlerFunc {

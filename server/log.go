@@ -17,9 +17,9 @@ func RequestLogM(log *zerolog.Logger) gin.HandlerFunc {
 		c.Header("X-Request-Id", requestId)
 
 		path := c.Request.URL.Path
-		if c.Request.URL.RawQuery != "" {
-			path = path + "?" + c.Request.URL.RawQuery
-		}
+		// if c.Request.URL.RawQuery != "" {
+		// 	path = path + "?" + c.Request.URL.RawQuery
+		// }
 
 		start := time.Now()
 		c.Next()

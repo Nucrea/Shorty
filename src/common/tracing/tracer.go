@@ -19,7 +19,7 @@ func NewTracer(otelUrl string) (trace.Tracer, error) {
 	}
 
 	tracerProvider := traceSdk.NewTracerProvider(
-		traceSdk.WithSampler(traceSdk.TraceIDRatioBased(0.1)),
+		traceSdk.WithSampler(traceSdk.AlwaysSample()),
 		traceSdk.WithBatcher(
 			tracerExporter,
 			traceSdk.WithMaxQueueSize(8192),

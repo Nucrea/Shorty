@@ -7,17 +7,17 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+func NewStorage(conn *pgx.Conn, tracer trace.Tracer) *Storage {
+	return &Storage{conn, tracer}
+}
+
 type Storage struct {
 	conn   *pgx.Conn
 	tracer trace.Tracer
 }
 
-func NewStorage(conn *pgx.Conn, tracer trace.Tracer) *Storage {
-	return &Storage{conn, tracer}
-}
-
 func (s *Storage) Create(ctx context.Context, shortId, url string) (string, error) {
-	_, span := s.tracer.Start(ctx, "postgres::Create")
+	_, span := s.tracer.Start(ctx, "postgres::createLink")
 	defer span.End()
 
 	query := `insert into shortlinks(short_id, url) values($1, $2);`
@@ -26,7 +26,7 @@ func (s *Storage) Create(ctx context.Context, shortId, url string) (string, erro
 }
 
 func (s *Storage) Get(ctx context.Context, shortId string) (string, error) {
-	_, span := s.tracer.Start(ctx, "postgres::Get")
+	_, span := s.tracer.Start(ctx, "postgres::getLink")
 	defer span.End()
 
 	query := `

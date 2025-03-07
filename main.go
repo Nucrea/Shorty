@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"shorty/server"
+	"shorty/src/common/tracing"
 	"shorty/src/services/links"
 	"shorty/src/services/ratelimit"
 
@@ -47,7 +48,7 @@ func main() {
 	}
 	rdb := redis.NewClient(redisOpts)
 
-	tracer, err := NewTracer("http://localhost:4318")
+	tracer, err := tracing.NewTracer("http://localhost:4318")
 	if err != nil {
 		log.Fatal().Err(err).Msg("error init tracer")
 	}

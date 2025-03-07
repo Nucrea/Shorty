@@ -10,6 +10,7 @@ import (
 	genericerror "shorty/server/pages/generic_error"
 	"shorty/server/pages/index"
 	"shorty/server/pages/result"
+	"shorty/src/common/tracing"
 	"shorty/src/services/links"
 	"shorty/src/services/ratelimit"
 
@@ -36,7 +37,10 @@ func Run(opts ServerOpts) {
 	errorPage := genericerror.NewPage()
 
 	gin.SetMode(gin.ReleaseMode)
+
 	server := gin.New()
+	server.ContextWithFallback = true // Use it to allow getting values from c.Request.Context(). CRITICAL FOR TRACING
+
 	server.Use(gin.Recovery())
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
@@ -49,7 +53,7 @@ func Run(opts ServerOpts) {
 	server.StaticFS("/static", http.FS(staticDir))
 
 	server.Use(RequestLogM(opts.Log))
-	server.Use(TracingM(opts.Tracer))
+	server.Use(tracing.NewMiddleware(opts.Tracer))
 
 	server.GET("/", indexPage.Clean)
 	server.GET("/create", handlers.NewLinkCreateH(
@@ -60,6 +64,7 @@ func Run(opts ServerOpts) {
 			ErrorPage:        errorPage,
 			LinkService:      opts.LinksService,
 			RatelimitService: opts.RatelimitService,
+			Tracer:           opts.Tracer,
 		},
 	))
 	server.GET("/:id", handlers.NewLinkResolveH(
