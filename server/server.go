@@ -22,7 +22,7 @@ var staticFS embed.FS
 
 type ServerOpts struct {
 	Port         uint16
-	BaseUrl      string
+	AppUrl       string
 	Log          *zerolog.Logger
 	LinksService *links.Service
 	BanService   *ban.Service
@@ -61,7 +61,7 @@ func Run(opts ServerOpts) {
 	))
 	server.GET("/:id", handlers.NewLinkResolveH(
 		handlers.ResolveHDeps{
-			BaseUrl:     opts.BaseUrl,
+			BaseUrl:     opts.AppUrl,
 			Log:         opts.Log,
 			LinkService: opts.LinksService,
 			ErrorPage:   errorPage,

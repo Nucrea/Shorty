@@ -18,8 +18,8 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 RUN chmod +x app
 
 ENV SHORTY_APP_PORT=8081
+ENV SHORTY_APP_URL=""
 ENV SHORTY_POSTGRES_URL=""
 ENV SHORTY_REDIS_URL=""
-ENV SHORTY_BASE_URL=""
 
 CMD ["./app"]
