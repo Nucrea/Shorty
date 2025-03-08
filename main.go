@@ -54,7 +54,7 @@ func main() {
 	}
 
 	linksService := links.NewService(db, conf.AppUrl, tracer)
-	ratelimitService := ratelimit.NewService(rdb)
+	ratelimitService := ratelimit.NewService(rdb, tracer)
 
 	server.Run(server.ServerOpts{
 		Port:             uint16(conf.AppPort),

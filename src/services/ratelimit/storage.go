@@ -6,19 +6,25 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type storage struct {
-	rdb *redis.Client
+	rdb    *redis.Client
+	tracer trace.Tracer
 }
 
-func NewStorage(rdb *redis.Client) *storage {
+func NewStorage(rdb *redis.Client, tracer trace.Tracer) *storage {
 	return &storage{
-		rdb: rdb,
+		rdb:    rdb,
+		tracer: tracer,
 	}
 }
 
 func (s *storage) IncRate(ctx context.Context, ip string, window time.Duration) (int, error) {
+	ctx, span := s.tracer.Start(ctx, "redis::ratelimit.IncRate")
+	defer span.End()
+
 	key := fmt.Sprintf("rate:%s", ip)
 
 	pipe := s.rdb.Pipeline()
@@ -32,6 +38,9 @@ func (s *storage) IncRate(ctx context.Context, ip string, window time.Duration) 
 }
 
 func (s *storage) IsBanned(ctx context.Context, ip string) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "redis::ratelimit.IsBanned")
+	defer span.End()
+
 	key := fmt.Sprintf("banned:%s", ip)
 	isBanned, err := s.rdb.Exists(ctx, key).Result()
 	if err != nil {
@@ -42,6 +51,9 @@ func (s *storage) IsBanned(ctx context.Context, ip string) (bool, error) {
 }
 
 func (s *storage) SetBanned(ctx context.Context, ip string, banDuration time.Duration) error {
+	ctx, span := s.tracer.Start(ctx, "redis::ratelimit.SetBanned")
+	defer span.End()
+
 	key := fmt.Sprintf("banned:%s", ip)
 	return s.rdb.Set(ctx, key, true, banDuration).Err()
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -25,9 +26,9 @@ type Service struct {
 	storage *storage
 }
 
-func NewService(rdb *redis.Client) *Service {
+func NewService(rdb *redis.Client, tracer trace.Tracer) *Service {
 	return &Service{
-		storage: &storage{rdb},
+		storage: &storage{rdb, tracer},
 	}
 }
 
