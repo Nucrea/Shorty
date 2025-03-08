@@ -5,9 +5,14 @@ import (
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	traceSdk "go.opentelemetry.io/otel/sdk/trace"
 )
+
+func NewNoopTracer() trace.Tracer {
+	return noop.NewTracerProvider().Tracer("shorty")
+}
 
 func NewTracer(otelUrl string) (trace.Tracer, error) {
 	tracerExporter, err := otlptracehttp.New(

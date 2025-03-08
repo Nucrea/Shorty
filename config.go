@@ -29,12 +29,12 @@ func NewConfig() (*Config, error) {
 	}
 
 	otelUrl := os.Getenv("SHORTY_OPENTELEMETRY_URL")
-	if otelUrl == "" {
-		return nil, fmt.Errorf("empty otel url")
-	}
-	if _, err := url.Parse(otelUrl); err != nil {
-		return nil, fmt.Errorf("bad otel url")
-	}
+	// if otelUrl == "" {
+	// 	return nil, fmt.Errorf("empty otel url")
+	// }
+	// if _, err := url.Parse(otelUrl); err != nil {
+	// 	return nil, fmt.Errorf("bad otel url")
+	// }
 
 	redisUrl := os.Getenv("SHORTY_REDIS_URL")
 	if redisUrl == "" {

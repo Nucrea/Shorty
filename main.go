@@ -48,9 +48,12 @@ func main() {
 	}
 	rdb := redis.NewClient(redisOpts)
 
-	tracer, err := tracing.NewTracer(conf.OTELUrl)
-	if err != nil {
-		log.Fatal().Err(err).Msg("error init tracer")
+	tracer := tracing.NewNoopTracer()
+	if conf.OTELUrl != "" {
+		tracer, err = tracing.NewTracer(conf.OTELUrl)
+		if err != nil {
+			log.Fatal().Err(err).Msg("error init tracer")
+		}
 	}
 
 	linksService := links.NewService(db, conf.AppUrl, tracer)
