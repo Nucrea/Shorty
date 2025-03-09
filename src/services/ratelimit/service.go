@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	ErrTemporaryBanned = errors.New("ip temporary banned")
+	ErrTemporaryBanned = errors.New("temporary banned")
 	ErrTooManyRequests = errors.New("too many requests")
 	ErrInternal        = errors.New("internal error")
 )
@@ -60,7 +60,11 @@ func (s *Service) Check(ctx context.Context, ip string) error {
 		return ErrInternal
 	}
 	if rate >= BanAmount {
-		s.storage.SetBanned(ctx, ip, BanWindow)
+		if err := s.storage.SetBanned(ctx, ip, BanWindow); err != nil {
+			log.Error().Err(err).Msgf("set banned with storage")
+			return ErrInternal
+		}
+
 		log.Info().Msgf("temporary banned %s", ip)
 		return ErrTemporaryBanned
 	}
