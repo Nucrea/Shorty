@@ -32,6 +32,7 @@ func RequestLogM(log *zerolog.Logger) gin.HandlerFunc {
 			Str("request_id", requestId).
 			Str("method", method).
 			Str("path", path).
+			Str("ip", c.ClientIP()).
 			Int("status", statusCode).
 			Dur("duration", duration).
 			Send()
