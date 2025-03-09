@@ -68,25 +68,33 @@ func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, erro
 	return link, nil
 }
 
+func (s *Service) parseUrl(url string) (string, error) {
+	if len(url) > 2000 {
+		return "", ErrBadUrl
+	}
+
+	url = strings.TrimSpace(url)
+	if !govalidator.IsURL(url) {
+		return "", ErrBadUrl
+	}
+
+	if !strings.HasSuffix(url, "http") || !strings.HasSuffix(url, "https") {
+		url = fmt.Sprintf("https://%s", url)
+	}
+
+	return url, nil
+}
+
 func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
 	log := s.log.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "links::CreateLink")
 	defer span.End()
 
-	if len(url) > 2000 {
-		log.Info().Msgf("too long input url %s", url)
-		return "", ErrBadUrl
-	}
-
-	url = strings.TrimSpace(url)
-	if !govalidator.IsURL(url) {
+	url, err := s.parseUrl(url)
+	if err != nil {
 		log.Info().Msgf("invalid input url %s", url)
 		return "", ErrBadUrl
-	}
-
-	if !strings.HasSuffix(url, "http") || !strings.HasSuffix(url, "https") {
-		url = fmt.Sprintf("https://%s", url)
 	}
 
 	shortId := NewShortId(10)
@@ -106,10 +114,14 @@ func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
 	ctx, span := s.tracer.Start(ctx, "links::CreateQR")
 	defer span.End()
 
-	link, err := s.CreateLink(ctx, url)
+	url, err := s.parseUrl(url)
 	if err != nil {
-		return "", err
+		log.Info().Msgf("invalid input url %s", url)
+		return "", ErrBadUrl
 	}
+
+	shortId := NewShortId(10)
+	link := fmt.Sprintf("%s/%s", s.appUrl, shortId)
 
 	qrc, err := qrcode.New(link)
 	if err != nil {
@@ -123,6 +135,11 @@ func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
 	wr := standard.NewWithWriter(wc, standard.WithQRWidth(40))
 	if err := qrc.Save(wr); err != nil {
 		log.Error().Msgf("saving QR Code for link=%s", url)
+		return "", ErrInternal
+	}
+
+	if err := s.storage.CreateLink(ctx, shortId, url); err != nil {
+		log.Error().Err(err).Msgf("creating qr and link with storage")
 		return "", ErrInternal
 	}
 
