@@ -2,16 +2,16 @@ package handlers
 
 import (
 	genericerror "shorty/server/pages/generic_error"
+	"shorty/src/common/logger"
 	"shorty/src/services/links"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 type ResolveHDeps struct {
 	BaseUrl     string
-	Log         *zerolog.Logger
+	Log         logger.Logger
 	ErrorPage   *genericerror.Page
 	LinkService *links.Service
 }

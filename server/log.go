@@ -1,14 +1,15 @@
 package server
 
 import (
+	"shorty/src/common/logger"
+	"shorty/src/common/tracing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 )
 
-func RequestLogM(log *zerolog.Logger) gin.HandlerFunc {
+func NewRequestLogM(log logger.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestId := c.GetHeader("X-Request-Id")
 		if requestId == "" {
@@ -21,6 +22,8 @@ func RequestLogM(log *zerolog.Logger) gin.HandlerFunc {
 		// 	path = path + "?" + c.Request.URL.RawQuery
 		// }
 
+		logger.SetCtxRequestId(c, requestId)
+
 		start := time.Now()
 		c.Next()
 		duration := time.Since(start)
@@ -28,9 +31,14 @@ func RequestLogM(log *zerolog.Logger) gin.HandlerFunc {
 		method := c.Request.Method
 		statusCode := c.Writer.Status()
 
-		log.Info().
-			Str("request_id", requestId).
-			Str("method", method).
+		traceId := c.GetString(tracing.TraceIdCtxKey)
+
+		info := log.Info().Str("requestId", requestId)
+		if traceId != "" {
+			info = info.Str("traceId", traceId)
+		}
+
+		info.Str("method", method).
 			Str("path", path).
 			Str("ip", c.ClientIP()).
 			Int("status", statusCode).

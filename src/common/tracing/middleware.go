@@ -7,13 +7,18 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const TraceIdHeader = "X-Trace-Id"
+const TraceIdCtxKey = "traceId"
+
 func NewMiddleware(tracer trace.Tracer) gin.HandlerFunc {
 	prop := otel.GetTextMapPropagator()
 
 	return func(c *gin.Context) {
+		traceId := ""
 		savedCtx := c.Request.Context()
 		defer func() {
 			c.Request = c.Request.WithContext(savedCtx)
+			c.Set(TraceIdCtxKey, traceId)
 		}()
 
 		ctx := prop.Extract(savedCtx, propagation.HeaderCarrier(c.Request.Header))
@@ -21,8 +26,8 @@ func NewMiddleware(tracer trace.Tracer) gin.HandlerFunc {
 		ctx, span := tracer.Start(ctx, "request")
 		defer span.End()
 
-		traceId := span.SpanContext().TraceID()
-		c.Header("X-Trace-Id", traceId.String())
+		traceId = span.SpanContext().TraceID().String()
+		c.Header(TraceIdHeader, traceId)
 
 		c.Request = c.Request.WithContext(ctx)
 

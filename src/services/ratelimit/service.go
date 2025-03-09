@@ -3,68 +3,73 @@ package ratelimit
 import (
 	"context"
 	"errors"
+	"shorty/src/common/logger"
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel/trace"
 )
 
 var (
-	ErrTemporaryBanned = errors.New("ip temporary banned")
+	ErrTemporaryBanned = errors.New("temporary banned")
 	ErrTooManyRequests = errors.New("too many requests")
 	ErrInternal        = errors.New("internal error")
 )
 
 const (
 	LimitWindow = 1 * time.Minute
-	LimitAmount = 30
+	LimitAmount = 20
 
-	BanWindow = 30 * time.Minute
-	BanAmount = 120
+	BanWindow = 1 * time.Hour
+	BanAmount = 60
 )
 
-func NewService(rdb *redis.Client, log *zerolog.Logger, tracer trace.Tracer) *Service {
-	newLog := log.With().Str("service", "ratelimit").Logger()
+func NewService(rdb *redis.Client, log logger.Logger, tracer trace.Tracer) *Service {
 	return &Service{
-		log:     &newLog,
+		log:     log.WithService("ratelimit"),
 		tracer:  tracer,
 		storage: NewStorage(rdb, tracer),
 	}
 }
 
 type Service struct {
-	log     *zerolog.Logger
+	log     logger.Logger
 	tracer  trace.Tracer
 	storage *storage
 }
 
 func (s *Service) Check(ctx context.Context, ip string) error {
+	log := s.log.WithContext(ctx)
+
 	ctx, span := s.tracer.Start(ctx, "ratelimit::Check")
 	defer span.End()
 
 	banned, err := s.storage.IsBanned(ctx, ip)
 	if err != nil {
-		s.log.Error().Err(err).Msgf("checking banned with storage")
+		log.Error().Err(err).Msgf("checking banned with storage")
 		return ErrInternal
 	}
 	if banned {
-		s.log.Info().Msgf("rejected banned %s", ip)
+		log.Info().Msgf("rejected banned %s", ip)
 		return ErrTemporaryBanned
 	}
 
 	rate, err := s.storage.IncRate(ctx, ip, LimitWindow)
 	if err != nil {
-		s.log.Error().Err(err).Msgf("inc requests rate with storage")
+		log.Error().Err(err).Msgf("inc requests rate with storage")
 		return ErrInternal
 	}
 	if rate >= BanAmount {
-		s.storage.SetBanned(ctx, ip, BanWindow)
-		s.log.Info().Msgf("temporary banned %s", ip)
+		if err := s.storage.SetBanned(ctx, ip, BanWindow); err != nil {
+			log.Error().Err(err).Msgf("set banned with storage")
+			return ErrInternal
+		}
+
+		log.Info().Msgf("temporary banned %s", ip)
 		return ErrTemporaryBanned
 	}
 	if rate >= LimitAmount {
-		s.log.Info().Msgf("too many requests from %s", ip)
+		log.Info().Msgf("too many requests from %s", ip)
 		return ErrTooManyRequests
 	}
 
