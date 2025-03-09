@@ -61,7 +61,10 @@ func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, erro
 		s.log.Info().Msgf("no such link with id=%s", linkId)
 		return "", ErrNoSuchLink
 	}
-	return link, err
+
+	s.log.Info().Msgf("got link with id=%s from storage", linkId)
+
+	return link, nil
 }
 
 func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
@@ -84,8 +87,7 @@ func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
 	}
 
 	shortId := NewShortId(10)
-	_, err := s.storage.CreateLink(ctx, shortId, url)
-	if err != nil {
+	if err := s.storage.CreateLink(ctx, shortId, url); err != nil {
 		s.log.Error().Err(err).Msgf("creating link with storage")
 		return "", ErrInternal
 	}

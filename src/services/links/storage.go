@@ -16,13 +16,13 @@ type storage struct {
 	tracer trace.Tracer
 }
 
-func (s *storage) CreateLink(ctx context.Context, shortId, url string) (string, error) {
+func (s *storage) CreateLink(ctx context.Context, shortId, url string) error {
 	_, span := s.tracer.Start(ctx, "postgres::CreateLink")
 	defer span.End()
 
 	query := `insert into shortlinks(short_id, url) values($1, $2);`
 	_, err := s.conn.Exec(ctx, query, shortId, url)
-	return shortId, err
+	return err
 }
 
 func (s *storage) GetLink(ctx context.Context, shortId string) (string, error) {
