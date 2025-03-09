@@ -13,6 +13,7 @@ import (
 var (
 	ErrTemporaryBanned = errors.New("ip temporary banned")
 	ErrTooManyRequests = errors.New("too many requests")
+	ErrInternal        = errors.New("internal error")
 )
 
 const (
@@ -27,20 +28,25 @@ func NewService(rdb *redis.Client, log *zerolog.Logger, tracer trace.Tracer) *Se
 	newLog := log.With().Str("service", "ratelimit").Logger()
 	return &Service{
 		log:     &newLog,
-		storage: &storage{rdb, tracer},
+		tracer:  tracer,
+		storage: NewStorage(rdb, tracer),
 	}
 }
 
 type Service struct {
 	log     *zerolog.Logger
+	tracer  trace.Tracer
 	storage *storage
 }
 
 func (s *Service) Check(ctx context.Context, ip string) error {
+	ctx, span := s.tracer.Start(ctx, "ratelimit::Check")
+	defer span.End()
+
 	banned, err := s.storage.IsBanned(ctx, ip)
 	if err != nil {
 		s.log.Error().Err(err).Msgf("checking banned with storage")
-		return err
+		return ErrInternal
 	}
 	if banned {
 		s.log.Info().Msgf("rejected banned %s", ip)
@@ -50,7 +56,7 @@ func (s *Service) Check(ctx context.Context, ip string) error {
 	rate, err := s.storage.IncRate(ctx, ip, LimitWindow)
 	if err != nil {
 		s.log.Error().Err(err).Msgf("inc requests rate with storage")
-		return err
+		return ErrInternal
 	}
 	if rate >= BanAmount {
 		s.storage.SetBanned(ctx, ip, BanWindow)

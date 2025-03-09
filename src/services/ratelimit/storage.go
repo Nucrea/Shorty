@@ -22,7 +22,7 @@ func NewStorage(rdb *redis.Client, tracer trace.Tracer) *storage {
 }
 
 func (s *storage) IncRate(ctx context.Context, ip string, window time.Duration) (int, error) {
-	ctx, span := s.tracer.Start(ctx, "redis::ratelimit.IncRate")
+	ctx, span := s.tracer.Start(ctx, "redis::IncRate")
 	defer span.End()
 
 	key := fmt.Sprintf("rate:%s", ip)
@@ -38,7 +38,7 @@ func (s *storage) IncRate(ctx context.Context, ip string, window time.Duration) 
 }
 
 func (s *storage) IsBanned(ctx context.Context, ip string) (bool, error) {
-	ctx, span := s.tracer.Start(ctx, "redis::ratelimit.IsBanned")
+	ctx, span := s.tracer.Start(ctx, "redis::IsBanned")
 	defer span.End()
 
 	key := fmt.Sprintf("banned:%s", ip)
@@ -51,7 +51,7 @@ func (s *storage) IsBanned(ctx context.Context, ip string) (bool, error) {
 }
 
 func (s *storage) SetBanned(ctx context.Context, ip string, banDuration time.Duration) error {
-	ctx, span := s.tracer.Start(ctx, "redis::ratelimit.SetBanned")
+	ctx, span := s.tracer.Start(ctx, "redis::SetBanned")
 	defer span.End()
 
 	key := fmt.Sprintf("banned:%s", ip)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -17,9 +18,10 @@ import (
 )
 
 var (
-	ErrBadShortId = fmt.Errorf("invalid short id")
-	ErrBadUrl     = fmt.Errorf("invalid url")
-	ErrNoSuchLink = fmt.Errorf("no such link")
+	ErrBadShortId = errors.New("invalid short id")
+	ErrBadUrl     = errors.New("invalid url")
+	ErrNoSuchLink = errors.New("no such link")
+	ErrInternal   = errors.New("internal error")
 )
 
 func NewService(pgConn *pgx.Conn, log *zerolog.Logger, appUrl string, tracer trace.Tracer) *Service {
@@ -27,6 +29,7 @@ func NewService(pgConn *pgx.Conn, log *zerolog.Logger, appUrl string, tracer tra
 	newLog := log.With().Str("service", "links").Logger()
 	return &Service{
 		log:           &newLog,
+		tracer:        tracer,
 		shortIdRegexp: shortIdRegexp,
 		appUrl:        appUrl,
 		storage:       NewStorage(pgConn, tracer),
@@ -35,20 +38,24 @@ func NewService(pgConn *pgx.Conn, log *zerolog.Logger, appUrl string, tracer tra
 
 type Service struct {
 	log           *zerolog.Logger
+	tracer        trace.Tracer
 	shortIdRegexp *regexp.Regexp
 	appUrl        string
-	storage       *Storage
+	storage       *storage
 }
 
 func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, error) {
+	ctx, span := s.tracer.Start(ctx, "links::GetByShortId")
+	defer span.End()
+
 	if !s.shortIdRegexp.MatchString(linkId) {
 		return "", ErrBadShortId
 	}
 
-	link, err := s.storage.Get(ctx, linkId)
+	link, err := s.storage.GetLink(ctx, linkId)
 	if err != nil {
 		s.log.Error().Err(err).Msgf("getting link with id=%s from storage", linkId)
-		return "", err
+		return "", ErrInternal
 	}
 	if link == "" {
 		s.log.Info().Msgf("no such link with id=%s", linkId)
@@ -58,6 +65,9 @@ func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, erro
 }
 
 func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
+	ctx, span := s.tracer.Start(ctx, "links::CreateLink")
+	defer span.End()
+
 	if len(url) > 2000 {
 		s.log.Info().Msgf("too long input url %s", url)
 		return "", ErrBadUrl
@@ -74,10 +84,10 @@ func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
 	}
 
 	shortId := NewShortId(10)
-	_, err := s.storage.Create(ctx, shortId, url)
+	_, err := s.storage.CreateLink(ctx, shortId, url)
 	if err != nil {
 		s.log.Error().Err(err).Msgf("creating link with storage")
-		return "", err
+		return "", ErrInternal
 	}
 
 	s.log.Info().Msgf("created link with id=%s", shortId)
@@ -86,6 +96,9 @@ func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
 }
 
 func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
+	ctx, span := s.tracer.Start(ctx, "links::CreateQR")
+	defer span.End()
+
 	link, err := s.CreateLink(ctx, url)
 	if err != nil {
 		return "", err
@@ -94,7 +107,7 @@ func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
 	qrc, err := qrcode.New(link)
 	if err != nil {
 		s.log.Error().Msgf("creating QR Code for link=%s", url)
-		return "", err
+		return "", ErrInternal
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -103,7 +116,7 @@ func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
 	wr := standard.NewWithWriter(wc, standard.WithQRWidth(40))
 	if err := qrc.Save(wr); err != nil {
 		s.log.Error().Msgf("saving QR Code for link=%s", url)
-		return "", err
+		return "", ErrInternal
 	}
 
 	s.log.Info().Msgf("created QR Code for link=%s", url)
