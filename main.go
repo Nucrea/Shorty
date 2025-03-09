@@ -3,16 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
 	"shorty/server"
+	"shorty/src/common/logger"
 	"shorty/src/common/tracing"
 	"shorty/src/services/links"
 	"shorty/src/services/ratelimit"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog"
 )
 
 func main() {
@@ -23,19 +21,10 @@ func main() {
 		panic(fmt.Errorf("error parsing environment variables: %w", err))
 	}
 
-	var writer io.Writer = os.Stdout
-
-	if conf.LogFile != "" {
-		file, err := os.OpenFile(conf.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
-		if err != nil {
-			panic("error opening log file")
-		}
-		defer file.Close()
-
-		writer = io.MultiWriter(writer, file)
+	log, err := logger.New(conf.LogFile)
+	if err != nil {
+		panic(err)
 	}
-
-	log := zerolog.New(writer).With().Timestamp().Logger()
 
 	db, err := pgx.Connect(ctx, conf.PostgresUrl)
 	if err != nil {
@@ -56,13 +45,13 @@ func main() {
 		}
 	}
 
-	linksService := links.NewService(db, &log, conf.AppUrl, tracer)
-	ratelimitService := ratelimit.NewService(rdb, &log, tracer)
+	linksService := links.NewService(db, log, conf.AppUrl, tracer)
+	ratelimitService := ratelimit.NewService(rdb, log, tracer)
 
 	server.Run(server.ServerOpts{
 		Port:             uint16(conf.AppPort),
 		AppUrl:           conf.AppUrl,
-		Log:              &log,
+		Log:              log,
 		LinksService:     linksService,
 		RatelimitService: ratelimitService,
 		Tracer:           tracer,

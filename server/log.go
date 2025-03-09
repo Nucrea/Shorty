@@ -1,14 +1,14 @@
 package server
 
 import (
+	"shorty/src/common/logger"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 )
 
-func RequestLogM(log *zerolog.Logger) gin.HandlerFunc {
+func RequestLogM(log logger.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestId := c.GetHeader("X-Request-Id")
 		if requestId == "" {
@@ -21,6 +21,8 @@ func RequestLogM(log *zerolog.Logger) gin.HandlerFunc {
 		// 	path = path + "?" + c.Request.URL.RawQuery
 		// }
 
+		logger.SetCtxRequestId(c, requestId)
+
 		start := time.Now()
 		c.Next()
 		duration := time.Since(start)
@@ -29,7 +31,7 @@ func RequestLogM(log *zerolog.Logger) gin.HandlerFunc {
 		statusCode := c.Writer.Status()
 
 		log.Info().
-			Str("request_id", requestId).
+			Str("requestId", requestId).
 			Str("method", method).
 			Str("path", path).
 			Str("ip", c.ClientIP()).

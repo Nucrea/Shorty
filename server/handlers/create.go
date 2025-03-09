@@ -4,17 +4,17 @@ import (
 	genericerror "shorty/server/pages/generic_error"
 	"shorty/server/pages/index"
 	"shorty/server/pages/result"
+	"shorty/src/common/logger"
 	"shorty/src/services/links"
 	"shorty/src/services/ratelimit"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type CreateHDeps struct {
-	Log              *zerolog.Logger
+	Log              logger.Logger
 	IndexPage        *index.Page
 	ResultPage       *result.Page
 	ErrorPage        *genericerror.Page

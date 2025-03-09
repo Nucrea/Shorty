@@ -3,10 +3,10 @@ package ratelimit
 import (
 	"context"
 	"errors"
+	"shorty/src/common/logger"
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -24,17 +24,16 @@ const (
 	BanAmount = 120
 )
 
-func NewService(rdb *redis.Client, log *zerolog.Logger, tracer trace.Tracer) *Service {
-	newLog := log.With().Str("service", "ratelimit").Logger()
+func NewService(rdb *redis.Client, log logger.Logger, tracer trace.Tracer) *Service {
 	return &Service{
-		log:     &newLog,
+		log:     log.WithService("ratelimit"),
 		tracer:  tracer,
 		storage: NewStorage(rdb, tracer),
 	}
 }
 
 type Service struct {
-	log     *zerolog.Logger
+	log     logger.Logger
 	tracer  trace.Tracer
 	storage *storage
 }

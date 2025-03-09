@@ -10,12 +10,12 @@ import (
 	genericerror "shorty/server/pages/generic_error"
 	"shorty/server/pages/index"
 	"shorty/server/pages/result"
+	"shorty/src/common/logger"
 	"shorty/src/common/tracing"
 	"shorty/src/services/links"
 	"shorty/src/services/ratelimit"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -25,7 +25,7 @@ var staticFS embed.FS
 type ServerOpts struct {
 	Port             uint16
 	AppUrl           string
-	Log              *zerolog.Logger
+	Log              logger.Logger
 	LinksService     *links.Service
 	RatelimitService *ratelimit.Service
 	Tracer           trace.Tracer
