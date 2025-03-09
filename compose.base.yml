@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7.4.2-alpine
+    ports:
+      - 6379:6379
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.108.0
+    volumes:
+      - ./deploy/otel.yml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 13133:13133 # health_check extension
+      - 4318:4318 # OTLP http receiver

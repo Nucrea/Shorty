@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/yeqown/go-qrcode/v2"
 	"github.com/yeqown/go-qrcode/writer/standard"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -21,12 +22,12 @@ var (
 	ErrNoSuchLink = fmt.Errorf("no such link")
 )
 
-func NewService(pgConn *pgx.Conn, appUrl string) *Service {
+func NewService(pgConn *pgx.Conn, appUrl string, tracer trace.Tracer) *Service {
 	shortIdRegexp := regexp.MustCompile(`^\w{10}$`)
 	return &Service{
 		shortIdRegexp: shortIdRegexp,
 		appUrl:        appUrl,
-		storage:       NewStorage(pgConn),
+		storage:       NewStorage(pgConn, tracer),
 	}
 }
 

@@ -10,22 +10,25 @@ import (
 	genericerror "shorty/server/pages/generic_error"
 	"shorty/server/pages/index"
 	"shorty/server/pages/result"
-	"shorty/src/services/ban"
+	"shorty/src/common/tracing"
 	"shorty/src/services/links"
+	"shorty/src/services/ratelimit"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/trace"
 )
 
 //go:embed static/*
 var staticFS embed.FS
 
 type ServerOpts struct {
-	Port         uint16
-	AppUrl       string
-	Log          *zerolog.Logger
-	LinksService *links.Service
-	BanService   *ban.Service
+	Port             uint16
+	AppUrl           string
+	Log              *zerolog.Logger
+	LinksService     *links.Service
+	RatelimitService *ratelimit.Service
+	Tracer           trace.Tracer
 }
 
 func Run(opts ServerOpts) {
@@ -34,11 +37,11 @@ func Run(opts ServerOpts) {
 	errorPage := genericerror.NewPage()
 
 	gin.SetMode(gin.ReleaseMode)
+
 	server := gin.New()
+	server.ContextWithFallback = true // Use it to allow getting values from c.Request.Context(). CRITICAL FOR TRACING
 
 	server.Use(gin.Recovery())
-	server.Use(RequestLogM(opts.Log))
-
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
@@ -49,15 +52,19 @@ func Run(opts ServerOpts) {
 	}
 	server.StaticFS("/static", http.FS(staticDir))
 
+	server.Use(RequestLogM(opts.Log))
+	server.Use(tracing.NewMiddleware(opts.Tracer))
+
 	server.GET("/", indexPage.Clean)
 	server.GET("/create", handlers.NewLinkCreateH(
 		handlers.CreateHDeps{
-			Log:         opts.Log,
-			IndexPage:   indexPage,
-			ResultPage:  resultPage,
-			ErrorPage:   errorPage,
-			LinkService: opts.LinksService,
-			BanService:  opts.BanService,
+			Log:              opts.Log,
+			IndexPage:        indexPage,
+			ResultPage:       resultPage,
+			ErrorPage:        errorPage,
+			LinkService:      opts.LinksService,
+			RatelimitService: opts.RatelimitService,
+			Tracer:           opts.Tracer,
 		},
 	))
 	server.GET("/:id", handlers.NewLinkResolveH(

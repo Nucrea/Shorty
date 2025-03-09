@@ -26,11 +26,21 @@ type Page struct {
 	pageTemplate *template.Template
 }
 
+func (p *Page) TemporarilyBanned(c *gin.Context) {
+	c.Status(403)
+	p.pageTemplate.Execute(c.Writer, TemplateParams{
+		Status: 403,
+		Text:   "Temporarily Banned",
+	})
+	c.Header("Content-Type", "text/html")
+	c.Abort()
+}
+
 func (p *Page) TooMuchRequests(c *gin.Context) {
 	c.Status(429)
 	p.pageTemplate.Execute(c.Writer, TemplateParams{
 		Status: 429,
-		Text:   "Too Many Requests. Your IP is temporarily banned.",
+		Text:   "Too Many Requests",
 	})
 	c.Header("Content-Type", "text/html")
 	c.Abort()
