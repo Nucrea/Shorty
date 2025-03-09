@@ -39,31 +39,33 @@ type Service struct {
 }
 
 func (s *Service) Check(ctx context.Context, ip string) error {
+	log := s.log.WithContext(ctx)
+
 	ctx, span := s.tracer.Start(ctx, "ratelimit::Check")
 	defer span.End()
 
 	banned, err := s.storage.IsBanned(ctx, ip)
 	if err != nil {
-		s.log.Error().Err(err).Msgf("checking banned with storage")
+		log.Error().Err(err).Msgf("checking banned with storage")
 		return ErrInternal
 	}
 	if banned {
-		s.log.Info().Msgf("rejected banned %s", ip)
+		log.Info().Msgf("rejected banned %s", ip)
 		return ErrTemporaryBanned
 	}
 
 	rate, err := s.storage.IncRate(ctx, ip, LimitWindow)
 	if err != nil {
-		s.log.Error().Err(err).Msgf("inc requests rate with storage")
+		log.Error().Err(err).Msgf("inc requests rate with storage")
 		return ErrInternal
 	}
 	if rate >= BanAmount {
 		s.storage.SetBanned(ctx, ip, BanWindow)
-		s.log.Info().Msgf("temporary banned %s", ip)
+		log.Info().Msgf("temporary banned %s", ip)
 		return ErrTemporaryBanned
 	}
 	if rate >= LimitAmount {
-		s.log.Info().Msgf("too many requests from %s", ip)
+		log.Info().Msgf("too many requests from %s", ip)
 		return ErrTooManyRequests
 	}
 
