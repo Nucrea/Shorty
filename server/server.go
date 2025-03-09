@@ -52,8 +52,9 @@ func Run(opts ServerOpts) {
 	}
 	server.StaticFS("/static", http.FS(staticDir))
 
-	server.Use(RequestLogM(opts.Log))
+	server.Use(NewRequestLogM(opts.Log))
 	server.Use(tracing.NewMiddleware(opts.Tracer))
+	server.Use(NewRatelimitM(opts.RatelimitService, errorPage))
 
 	server.GET("/", indexPage.Clean)
 	server.GET("/create", handlers.NewLinkCreateH(

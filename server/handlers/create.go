@@ -25,16 +25,6 @@ type CreateHDeps struct {
 
 func NewLinkCreateH(p CreateHDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := p.RatelimitService.Check(c, c.ClientIP())
-		if err == ratelimit.ErrTooManyRequests {
-			p.ErrorPage.TooMuchRequests(c)
-			return
-		}
-		if err == ratelimit.ErrTemporaryBanned {
-			p.ErrorPage.TemporarilyBanned(c)
-			return
-		}
-
 		url := c.Query("url")
 		if url == "" {
 			p.IndexPage.WithError(c, "Bad url")

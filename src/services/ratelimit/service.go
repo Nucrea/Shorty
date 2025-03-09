@@ -18,10 +18,10 @@ var (
 
 const (
 	LimitWindow = 1 * time.Minute
-	LimitAmount = 30
+	LimitAmount = 20
 
-	BanWindow = 30 * time.Minute
-	BanAmount = 120
+	BanWindow = 1 * time.Hour
+	BanAmount = 60
 )
 
 func NewService(rdb *redis.Client, log logger.Logger, tracer trace.Tracer) *Service {
