@@ -16,6 +16,13 @@ type ImageInfoDTO struct {
 	ThumbnailId string
 }
 
+func newInfoStorage(db *pgx.Conn, tracer trace.Tracer) *infoStorage {
+	return &infoStorage{
+		db:     db,
+		tracer: tracer,
+	}
+}
+
 type infoStorage struct {
 	db     *pgx.Conn
 	tracer trace.Tracer
@@ -26,15 +33,16 @@ func (i *infoStorage) SaveImageInfo(ctx context.Context, dto ImageInfoDTO) (*Ima
 	defer span.End()
 
 	query := `INSERT INTO images (short_id, size, name, image_id, thumbnail_id) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
-	row := i.db.QueryRow(ctx, query, dto.Size, dto.Name, dto.ImageId, dto.ThumbnailId)
+	row := i.db.QueryRow(ctx, query, dto.ShortId, dto.Size, dto.Name, dto.ImageId, dto.ThumbnailId)
 
 	result := &ImageInfoDTO{
+		ShortId:     dto.ShortId,
 		Size:        dto.Size,
 		Name:        dto.Name,
 		ImageId:     dto.ImageId,
 		ThumbnailId: dto.ThumbnailId,
 	}
-	err := row.Scan(&dto.Id)
+	err := row.Scan(&result.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +54,7 @@ func (i *infoStorage) GetImageInfo(ctx context.Context, id string) (*ImageInfoDT
 	_, span := i.tracer.Start(ctx, "postgres::GetImageInfo")
 	defer span.End()
 
-	query := `SELECT id, short_id, size, name, image_id, thumbnail_id FROM images WHERE id = $1;`
+	query := `SELECT id, short_id, size, name, image_id, thumbnail_id FROM images WHERE short_id = $1;`
 	row := i.db.QueryRow(ctx, query, id)
 
 	result := &ImageInfoDTO{}

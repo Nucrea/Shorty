@@ -9,7 +9,10 @@ run-dev:
 	chmod 777 .run/shorty.log
 
 	docker compose up -d
-
+	
+	SHORTY_MINIO_ENDPOINT=localhost:9000 \
+	SHORTY_MINIO_ACCESS_KEY=miniokey \
+	SHORTY_MINIO_ACCESS_SECRET=miniokey \
 	SHORTY_LOG_FILE=".run/shorty.log" \
 	SHORTY_APP_PORT=8081 \
 	SHORTY_APP_URL=http://localhost:8081 \

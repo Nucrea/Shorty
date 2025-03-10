@@ -15,6 +15,10 @@ type Config struct {
 	RedisUrl    string
 	LogFile     string
 	OTELUrl     string
+
+	MinioEndpoint     string
+	MinioAccessKey    string
+	MinioAccessSecret string
 }
 
 func NewConfig() (*Config, error) {
@@ -52,6 +56,21 @@ func NewConfig() (*Config, error) {
 		return nil, fmt.Errorf("bad app url")
 	}
 
+	minioEndpoint := os.Getenv("SHORTY_MINIO_ENDPOINT")
+	if minioEndpoint == "" {
+		return nil, fmt.Errorf("empty minio endpoint")
+	}
+
+	minioAccessKey := os.Getenv("SHORTY_MINIO_ACCESS_KEY")
+	if minioAccessKey == "" {
+		return nil, fmt.Errorf("empty minio access key")
+	}
+
+	minioAccessSecret := os.Getenv("SHORTY_MINIO_ACCESS_SECRET")
+	if minioAccessSecret == "" {
+		return nil, fmt.Errorf("empty minio secret")
+	}
+
 	appPortEnv := os.Getenv("SHORTY_APP_PORT")
 	if appPortEnv == "" {
 		return nil, fmt.Errorf("empty app port")
@@ -65,11 +84,14 @@ func NewConfig() (*Config, error) {
 	}
 
 	return &Config{
-		AppUrl:      appUrl,
-		AppPort:     uint16(appPort),
-		PostgresUrl: pgUrl,
-		RedisUrl:    redisUrl,
-		LogFile:     logFile,
-		OTELUrl:     otelUrl,
+		AppUrl:            appUrl,
+		AppPort:           uint16(appPort),
+		PostgresUrl:       pgUrl,
+		RedisUrl:          redisUrl,
+		LogFile:           logFile,
+		OTELUrl:           otelUrl,
+		MinioEndpoint:     minioEndpoint,
+		MinioAccessKey:    minioAccessKey,
+		MinioAccessSecret: minioAccessSecret,
 	}, nil
 }
