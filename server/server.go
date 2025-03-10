@@ -68,7 +68,7 @@ func Run(opts ServerOpts) {
 			Tracer:           opts.Tracer,
 		},
 	))
-	server.GET("/:id", handlers.NewLinkResolveH(
+	server.GET("/s/:id", handlers.NewLinkResolveH(
 		handlers.ResolveHDeps{
 			BaseUrl:     opts.AppUrl,
 			Log:         opts.Log,
