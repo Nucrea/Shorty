@@ -2,8 +2,18 @@
 <div class="bg-white rounded-md shadow-lg p-4">
     <p class="mb-1 text-md">{{ .FileName }}</p>
     <p class="mb-2 text-sm">{{ .Size }} Bytes</p>
-    <a href="{{ .Url }}" target="_self">
-        <img width="800" height="600" src="{{ .Url }}" alt="image"/>
+    <hr align="center" class="mt-1 w-full" size="2" color="#000000"/>
+    <a href="{{ .ImageUrl }}" target="_self">
+        <img width="800" height="600" src="{{ .ImageUrl }}" alt="{{ .FileName }}"/>
     </a>
+    <hr align="center" class="mb-1 w-full" size="2" color="#000000"/>
+    <!-- <div class="flex flex-row"> -->
+        <p>URL:</p>
+        <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">{{ .ViewUrl }}</textarea>
+    <!-- </div> -->
+    <!-- <div class="flex flex-row"> -->
+        <p class="mt-1">BB-Code:</p>
+        <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">[URL={{ .ViewUrl }}][IMG]{{ .ThumbnailUrl }}[/IMG][/URL]</textarea>
+    <!-- </div> -->
 </div>
 {{ end }}

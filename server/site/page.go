@@ -66,14 +66,8 @@ func (s *Site) QRResult(c *gin.Context, imageBase64 string) {
 	c.Status(200)
 }
 
-func (s *Site) ViewImage(c *gin.Context, url, name string, size int) {
-	s.template("views/view_image.html").Execute(c.Writer,
-		ViewImageParams{
-			Url:      url,
-			FileName: name,
-			Size:     size,
-		},
-	)
+func (s *Site) ViewImage(c *gin.Context, p ViewImageParams) {
+	s.template("views/view_image.html").Execute(c.Writer, p)
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }

@@ -34,7 +34,15 @@ func ViewImage(d ViewImageDeps) gin.HandlerFunc {
 			return
 		}
 
+		viewUrl := fmt.Sprintf("%s/image/view/%s", d.BaseUrl, info.ShortId)
+		thumbUrl := fmt.Sprintf("%s/i/t/%s", d.BaseUrl, info.ThumbnailId)
 		imgUrl := fmt.Sprintf("%s/i/f/%s", d.BaseUrl, info.ImageId)
-		d.Site.ViewImage(c, imgUrl, info.Name, info.Size)
+		d.Site.ViewImage(c, site.ViewImageParams{
+			FileName:     info.Name,
+			Size:         info.Size,
+			ViewUrl:      viewUrl,
+			ImageUrl:     imgUrl,
+			ThumbnailUrl: thumbUrl,
+		})
 	}
 }

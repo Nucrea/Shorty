@@ -14,7 +14,9 @@ type QRResultParams struct {
 }
 
 type ViewImageParams struct {
-	FileName string
-	Size     int
-	Url      string
+	FileName     string
+	Size         int
+	ViewUrl      string
+	ImageUrl     string
+	ThumbnailUrl string
 }
