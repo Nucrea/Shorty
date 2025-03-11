@@ -1,7 +1,7 @@
 package site
 
 type ErrParams struct {
-	Code    int
+	Status  int
 	Message string
 }
 
@@ -15,7 +15,7 @@ type QRResultParams struct {
 
 type ViewImageParams struct {
 	FileName     string
-	Size         int
+	SizeMB       float32
 	ViewUrl      string
 	ImageUrl     string
 	ThumbnailUrl string

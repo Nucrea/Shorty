@@ -37,7 +37,7 @@ func UploadImage(d UploadImageDeps) gin.HandlerFunc {
 
 		bytes, _ := io.ReadAll(file)
 
-		info, err := d.ImageService.CreateImage(c, header.Filename, bytes)
+		info, err := d.ImageService.UploadImage(c, header.Filename, bytes)
 		if err != nil {
 			log.Error().Err(err).Msg("error creating image")
 			d.Site.InternalError(c)

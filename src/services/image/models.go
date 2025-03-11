@@ -4,6 +4,7 @@ type ImageInfoDTO struct {
 	Id          string
 	ShortId     string
 	Size        int
+	Hash        string
 	Name        string
 	ImageId     string
 	ThumbnailId string

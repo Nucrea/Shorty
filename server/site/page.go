@@ -20,10 +20,10 @@ func (s *Site) template(view string) *template.Template {
 	return tmpl
 }
 
-func (s *Site) err(c *gin.Context, code int, msg string) {
-	s.template("views/error.html").Execute(c.Writer, ErrParams{code, msg})
+func (s *Site) err(c *gin.Context, status int, msg string) {
+	s.template("views/error.html").Execute(c.Writer, ErrParams{Status: status, Message: msg})
 	c.Header("Content-Type", "text/html")
-	c.AbortWithStatus(code)
+	c.AbortWithStatus(status)
 }
 
 func (s *Site) TemporarilyBanned(c *gin.Context) {

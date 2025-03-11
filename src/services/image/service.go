@@ -3,6 +3,8 @@ package image
 import (
 	"bytes"
 	"context"
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -66,10 +68,18 @@ func (s *Service) createThumbnail(ctx context.Context, imgBytes []byte) ([]byte,
 	return buff.Bytes(), nil
 }
 
-func (s *Service) CreateImage(ctx context.Context, name string, imgBytes []byte) (*ImageInfoDTO, error) {
+func (s *Service) getHash(ctx context.Context, imgBytes []byte) string {
+	_, span := s.tracer.Start(ctx, "image::getHash")
+	defer span.End()
+
+	hash := sha512.Sum512(imgBytes)
+	return hex.EncodeToString(hash[:])
+}
+
+func (s *Service) UploadImage(ctx context.Context, name string, imgBytes []byte) (*ImageInfoDTO, error) {
 	log := s.log.WithContext(ctx)
 
-	_, span := s.tracer.Start(ctx, "image::CreateImage")
+	_, span := s.tracer.Start(ctx, "image::UploadImage")
 	defer span.End()
 
 	if size := len(imgBytes); size > 15*1024*1024 { //temporary 15MB max
@@ -77,29 +87,52 @@ func (s *Service) CreateImage(ctx context.Context, name string, imgBytes []byte)
 		return nil, ErrImageTooLarge
 	}
 
-	thumbBytes, err := s.createThumbnail(ctx, imgBytes)
+	hash := s.getHash(ctx, imgBytes)
+	info, err := s.infoStorage.GetImageInfoByHash(ctx, hash)
 	if err != nil {
-		return nil, err
-	}
-
-	imageId := NewShortId(32)
-	if err := s.fileStorage.SaveFile(ctx, imageId, imgBytes); err != nil {
-		log.Error().Err(err).Msg("failed saving main file")
+		log.Error().Err(err).Msg("failed getting img info by hash")
 		return nil, ErrInternal
 	}
 
-	thumbId := NewShortId(32)
-	if err := s.fileStorage.SaveFile(ctx, thumbId, thumbBytes); err != nil {
-		// s.broker.PutFilesToDelete(ctx, imageId)
-		log.Error().Err(err).Msg("failed saving thumb file")
-		return nil, ErrInternal
+	var (
+		foundExisting = info != nil
+		imgSize       = len(imgBytes)
+		imageId       string
+		thumbId       string
+	)
+	if foundExisting {
+		log.Info().Msg("found existing files with same hash, add reference to them")
+		imageId = info.ImageId
+		thumbId = info.ThumbnailId
+		imgSize = info.Size
+	} else {
+		log.Info().Msg("not found existing files with same hash, saving img and thumb to storage...")
+
+		thumbBytes, err := s.createThumbnail(ctx, imgBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		imageId = NewShortId(32)
+		if err := s.fileStorage.SaveFile(ctx, imageId, imgBytes); err != nil {
+			log.Error().Err(err).Msg("failed saving main file")
+			return nil, ErrInternal
+		}
+
+		thumbId = NewShortId(32)
+		if err := s.fileStorage.SaveFile(ctx, thumbId, thumbBytes); err != nil {
+			// s.broker.PutFilesToDelete(ctx, imageId)
+			log.Error().Err(err).Msg("failed saving thumb file")
+			return nil, ErrInternal
+		}
 	}
 
 	shortId := NewShortId(32)
 	result, err := s.infoStorage.SaveImageInfo(ctx,
 		ImageInfoDTO{
 			ShortId:     shortId,
-			Size:        len(imgBytes),
+			Size:        imgSize,
+			Hash:        hash,
 			Name:        name,
 			ImageId:     imageId,
 			ThumbnailId: thumbId,
@@ -122,7 +155,7 @@ func (s *Service) GetImageInfo(ctx context.Context, shortId string) (*ImageInfoD
 	_, span := s.tracer.Start(ctx, "image::GetImageInfo")
 	defer span.End()
 
-	imageInfo, err := s.infoStorage.GetImageInfo(ctx, shortId)
+	imageInfo, err := s.infoStorage.GetImageInfoByShortId(ctx, shortId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed getting image (id=%s) info from storage", shortId)
 		return nil, ErrInternal
@@ -166,7 +199,7 @@ func (s *Service) GetImage(ctx context.Context, shortId string) (*ImageDTO, erro
 	_, span := s.tracer.Start(ctx, "image::GetImage")
 	defer span.End()
 
-	imageInfo, err := s.infoStorage.GetImageInfo(ctx, shortId)
+	imageInfo, err := s.infoStorage.GetImageInfoByShortId(ctx, shortId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed getting image (id=%s) info from storage", shortId)
 		return nil, ErrInternal

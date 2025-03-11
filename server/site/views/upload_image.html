@@ -2,10 +2,8 @@
 <form action="/image/upload" method="POST" enctype="multipart/form-data">
     <div class="bg-white rounded-md shadow-xl p-8">
         <p class="mb-4">Upload your image</p>
-        <div class="flex mb-4">
-            <input type="file" name="image" accept="image/*" required>
-            <button class="flex rounded-r pl-2 pr-2 shadow-md bg-gray-300 hover:bg-sky-600 active:bg-sky-500 transition-all">Get</button>
-        </div>
+        <input type="file" name="image" accept="image/*" required>
+        <button class="flex rounded-r pl-2 pr-2 shadow-md bg-gray-300 hover:bg-sky-600 active:bg-sky-500 transition-all">Upload</button>
     </div>   
 </form> 
 {{ end }}
