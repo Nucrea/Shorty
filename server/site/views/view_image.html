@@ -1,0 +1,9 @@
+{{ define "content" }}
+<div class="bg-white rounded-md shadow-lg p-4">
+    <p class="mb-1 text-md">{{ .FileName }}</p>
+    <p class="mb-2 text-sm">{{ .Size }} Bytes</p>
+    <a href="{{ .Url }}" target="_self">
+        <img width="800" height="600" src="{{ .Url }}" alt="image"/>
+    </a>
+</div>
+{{ end }}

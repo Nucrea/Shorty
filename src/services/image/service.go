@@ -40,16 +40,11 @@ type Service struct {
 	infoStorage *infoStorage
 }
 
-func (s *Service) CreateImage(ctx context.Context, name string, imgBytes []byte) (*ImageInfoDTO, error) {
+func (s *Service) createThumbnail(ctx context.Context, imgBytes []byte) ([]byte, error) {
 	log := s.log.WithContext(ctx)
 
-	_, span := s.tracer.Start(ctx, "image::CreateImage")
+	_, span := s.tracer.Start(ctx, "image::createThumbnail")
 	defer span.End()
-
-	if size := len(imgBytes); size > 15*1024*1024 { //temporary 15MB max
-		log.Info().Msgf("rejected too heavy image with size %d", size)
-		return nil, ErrImageTooLarge
-	}
 
 	img, format, err := image.Decode(bytes.NewReader(imgBytes))
 	if err != nil {
@@ -67,7 +62,25 @@ func (s *Service) CreateImage(ctx context.Context, name string, imgBytes []byte)
 		log.Error().Err(err).Msg("failed encoding thumbnail")
 		return nil, ErrInternal
 	}
-	thumbBytes := buff.Bytes()
+
+	return buff.Bytes(), nil
+}
+
+func (s *Service) CreateImage(ctx context.Context, name string, imgBytes []byte) (*ImageInfoDTO, error) {
+	log := s.log.WithContext(ctx)
+
+	_, span := s.tracer.Start(ctx, "image::CreateImage")
+	defer span.End()
+
+	if size := len(imgBytes); size > 15*1024*1024 { //temporary 15MB max
+		log.Info().Msgf("rejected too heavy image with size %d", size)
+		return nil, ErrImageTooLarge
+	}
+
+	thumbBytes, err := s.createThumbnail(ctx, imgBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	imageId := NewShortId(32)
 	if err := s.fileStorage.SaveFile(ctx, imageId, imgBytes); err != nil {
@@ -77,7 +90,7 @@ func (s *Service) CreateImage(ctx context.Context, name string, imgBytes []byte)
 
 	thumbId := NewShortId(32)
 	if err := s.fileStorage.SaveFile(ctx, thumbId, thumbBytes); err != nil {
-		s.broker.PutFilesToDelete(ctx, imageId)
+		// s.broker.PutFilesToDelete(ctx, imageId)
 		log.Error().Err(err).Msg("failed saving thumb file")
 		return nil, ErrInternal
 	}
@@ -93,7 +106,7 @@ func (s *Service) CreateImage(ctx context.Context, name string, imgBytes []byte)
 		},
 	)
 	if err != nil {
-		s.broker.PutFilesToDelete(ctx, imageId, thumbId)
+		// s.broker.PutFilesToDelete(ctx, imageId, thumbId)
 		log.Error().Err(err).Msg("failed writing info")
 		return nil, ErrInternal
 	}
@@ -103,10 +116,10 @@ func (s *Service) CreateImage(ctx context.Context, name string, imgBytes []byte)
 	return result, nil
 }
 
-func (s *Service) GetThumbnail(ctx context.Context, shortId string) ([]byte, error) {
+func (s *Service) GetImageInfo(ctx context.Context, shortId string) (*ImageInfoDTO, error) {
 	log := s.log.WithContext(ctx)
 
-	_, span := s.tracer.Start(ctx, "image::GetThumbnail")
+	_, span := s.tracer.Start(ctx, "image::GetImageInfo")
 	defer span.End()
 
 	imageInfo, err := s.infoStorage.GetImageInfo(ctx, shortId)
@@ -114,17 +127,40 @@ func (s *Service) GetThumbnail(ctx context.Context, shortId string) ([]byte, err
 		log.Error().Err(err).Msgf("failed getting image (id=%s) info from storage", shortId)
 		return nil, ErrInternal
 	}
+	if imageInfo == nil {
+		log.Info().Msgf("not found image with id=%s", shortId)
+		return nil, ErrImageNotFound
+	}
 
-	thumbBytes, err := s.fileStorage.GetFile(ctx, imageInfo.ThumbnailId)
+	return imageInfo, nil
+}
+
+func (s *Service) GetFile(ctx context.Context, shortId string) ([]byte, error) {
+	log := s.log.WithContext(ctx)
+
+	_, span := s.tracer.Start(ctx, "image::GetFile")
+	defer span.End()
+
+	// imageInfo, err := s.infoStorage.GetImageInfo(ctx, shortId)
+	// if err != nil {
+	// 	log.Error().Err(err).Msgf("failed getting image (id=%s) info from storage", shortId)
+	// 	return nil, ErrInternal
+	// }
+	// if imageInfo == nil {
+	// 	log.Info().Msgf("not found image with id=%s", shortId)
+	// 	return nil, ErrImageNotFound
+	// }
+
+	imgBytes, err := s.fileStorage.GetFile(ctx, shortId)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed getting thumbnail (id=%s) from storage", shortId)
+		log.Error().Err(err).Msgf("failed getting image (id=%s) from storage", shortId)
 		return nil, ErrInternal
 	}
 
-	return thumbBytes, nil
+	return imgBytes, nil
 }
 
-func (s *Service) GetImage(ctx context.Context, shortId string) ([]byte, error) {
+func (s *Service) GetImage(ctx context.Context, shortId string) (*ImageDTO, error) {
 	log := s.log.WithContext(ctx)
 
 	_, span := s.tracer.Start(ctx, "image::GetImage")
@@ -135,6 +171,10 @@ func (s *Service) GetImage(ctx context.Context, shortId string) ([]byte, error) 
 		log.Error().Err(err).Msgf("failed getting image (id=%s) info from storage", shortId)
 		return nil, ErrInternal
 	}
+	if imageInfo == nil {
+		log.Info().Msgf("not found image with id=%s", shortId)
+		return nil, ErrImageNotFound
+	}
 
 	imageBytes, err := s.fileStorage.GetFile(ctx, imageInfo.ImageId)
 	if err != nil {
@@ -142,5 +182,10 @@ func (s *Service) GetImage(ctx context.Context, shortId string) ([]byte, error) 
 		return nil, ErrInternal
 	}
 
-	return imageBytes, nil
+	return &ImageDTO{
+		Id:    imageInfo.ImageId,
+		Size:  imageInfo.Size,
+		Name:  imageInfo.Name,
+		Bytes: imageBytes,
+	}, nil
 }

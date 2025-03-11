@@ -1,7 +1,7 @@
 package server
 
 import (
-	genericerror "shorty/server/pages/generic_error"
+	"shorty/server/site"
 	"shorty/src/services/ratelimit"
 
 	"github.com/gin-gonic/gin"
@@ -9,16 +9,16 @@ import (
 
 func NewRatelimitM(
 	ratelimitService *ratelimit.Service,
-	errorPage *genericerror.Page,
+	site *site.Site,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		err := ratelimitService.Check(c, c.ClientIP())
 		if err == ratelimit.ErrTooManyRequests {
-			errorPage.TooMuchRequests(c)
+			site.TooManyRequests(c)
 			return
 		}
 		if err == ratelimit.ErrTemporaryBanned {
-			errorPage.TemporarilyBanned(c)
+			site.TemporarilyBanned(c)
 			return
 		}
 

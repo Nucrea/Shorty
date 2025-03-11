@@ -7,15 +7,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type ImageInfoDTO struct {
-	Id          string
-	ShortId     string
-	Size        int
-	Name        string
-	ImageId     string
-	ThumbnailId string
-}
-
 func newInfoStorage(db *pgx.Conn, tracer trace.Tracer) *infoStorage {
 	return &infoStorage{
 		db:     db,

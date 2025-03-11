@@ -2,16 +2,12 @@ package server
 
 import (
 	"embed"
-	"encoding/base64"
 	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"shorty/server/handlers"
-	genericerror "shorty/server/pages/generic_error"
-	"shorty/server/pages/index"
-	"shorty/server/pages/result"
-	"shorty/server/pages/upload"
+	"shorty/server/site"
 	"shorty/src/common/logger"
 	"shorty/src/common/tracing"
 	"shorty/src/services/image"
@@ -36,10 +32,7 @@ type ServerOpts struct {
 }
 
 func Run(opts ServerOpts) {
-	indexPage := index.NewPage()
-	resultPage := result.NewPage()
-	errorPage := genericerror.NewPage()
-	uploadPage := upload.NewPage()
+	site := &site.Site{}
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -59,48 +52,51 @@ func Run(opts ServerOpts) {
 
 	server.Use(NewRequestLogM(opts.Log))
 	server.Use(tracing.NewMiddleware(opts.Tracer))
-	server.Use(NewRatelimitM(opts.RatelimitService, errorPage))
+	server.Use(NewRatelimitM(opts.RatelimitService, site))
 
-	server.GET("/", indexPage.Clean)
-	server.GET("/create", handlers.NewLinkCreateH(
-		handlers.CreateHDeps{
+	server.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(302, fmt.Sprintf("%s/link", opts.AppUrl))
+	})
+	server.GET("/link", site.CreateLink)
+	server.GET("/link/create", handlers.CreateLink(
+		handlers.CreateLinkDeps{
 			Log:              opts.Log,
-			IndexPage:        indexPage,
-			ResultPage:       resultPage,
-			ErrorPage:        errorPage,
+			Site:             site,
 			LinkService:      opts.LinksService,
 			RatelimitService: opts.RatelimitService,
-			Tracer:           opts.Tracer,
 		},
 	))
-	server.GET("/s/:id", handlers.NewLinkResolveH(
-		handlers.ResolveHDeps{
-			BaseUrl:     opts.AppUrl,
+	server.GET("/s/:id", handlers.ResolveLink(
+		handlers.ResolveLinkDeps{
 			Log:         opts.Log,
+			Site:        site,
 			LinkService: opts.LinksService,
-			ErrorPage:   errorPage,
 		},
 	))
-	server.GET("/image", uploadPage.Clean)
-	server.POST("/image/create", handlers.NewImageCreateH(
-		handlers.ImageHDeps{
+	server.GET("/image", site.UploadImage)
+	server.POST("/image/upload", handlers.UploadImage(
+		handlers.UploadImageDeps{
+			BaseUrl:      opts.AppUrl,
 			Log:          opts.Log,
-			ResultPage:   resultPage,
-			ErrorPage:    errorPage,
+			Site:         site,
 			ImageService: opts.ImageService,
-			UploadPage:   uploadPage,
 		},
 	))
-	server.GET("/image/:id", func(ctx *gin.Context) {
-		bytes, err := opts.ImageService.GetThumbnail(ctx, ctx.Param("id"))
-		if err != nil {
-			errorPage.InternalError(ctx)
-			return
-		}
-
-		aaa := base64.StdEncoding.EncodeToString(bytes)
-		resultPage.WithQRCode(ctx, aaa)
-	})
+	server.GET("/image/view/:id", handlers.ViewImage(
+		handlers.ViewImageDeps{
+			BaseUrl:      opts.AppUrl,
+			Log:          opts.Log,
+			Site:         site,
+			ImageService: opts.ImageService,
+		},
+	))
+	server.GET("/i/f/:id", handlers.ResolveImage(
+		handlers.ResolveImageDeps{
+			Log:          opts.Log,
+			Site:         site,
+			ImageService: opts.ImageService,
+		},
+	))
 
 	opts.Log.Info().Msgf("Started server on port %d", opts.Port)
 	server.Run(fmt.Sprintf(":%d", opts.Port))
