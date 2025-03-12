@@ -7,11 +7,10 @@ import (
 	"log"
 	"net/http"
 	"shorty/server/handlers"
-	genericerror "shorty/server/pages/generic_error"
-	"shorty/server/pages/index"
-	"shorty/server/pages/result"
+	"shorty/server/site"
 	"shorty/src/common/logger"
 	"shorty/src/common/tracing"
+	"shorty/src/services/image"
 	"shorty/src/services/links"
 	"shorty/src/services/ratelimit"
 
@@ -28,13 +27,12 @@ type ServerOpts struct {
 	Log              logger.Logger
 	LinksService     *links.Service
 	RatelimitService *ratelimit.Service
+	ImageService     *image.Service
 	Tracer           trace.Tracer
 }
 
 func Run(opts ServerOpts) {
-	indexPage := index.NewPage()
-	resultPage := result.NewPage()
-	errorPage := genericerror.NewPage()
+	site := &site.Site{}
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -54,26 +52,49 @@ func Run(opts ServerOpts) {
 
 	server.Use(NewRequestLogM(opts.Log))
 	server.Use(tracing.NewMiddleware(opts.Tracer))
-	server.Use(NewRatelimitM(opts.RatelimitService, errorPage))
+	server.Use(NewRatelimitM(opts.RatelimitService, site))
 
-	server.GET("/", indexPage.Clean)
-	server.GET("/create", handlers.NewLinkCreateH(
-		handlers.CreateHDeps{
+	server.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(302, fmt.Sprintf("%s/link", opts.AppUrl))
+	})
+	server.GET("/link", site.CreateLink)
+	server.GET("/link/create", handlers.CreateLink(
+		handlers.CreateLinkDeps{
 			Log:              opts.Log,
-			IndexPage:        indexPage,
-			ResultPage:       resultPage,
-			ErrorPage:        errorPage,
+			Site:             site,
 			LinkService:      opts.LinksService,
 			RatelimitService: opts.RatelimitService,
-			Tracer:           opts.Tracer,
 		},
 	))
-	server.GET("/:id", handlers.NewLinkResolveH(
-		handlers.ResolveHDeps{
-			BaseUrl:     opts.AppUrl,
+	server.GET("/s/:id", handlers.ResolveLink(
+		handlers.ResolveLinkDeps{
 			Log:         opts.Log,
+			Site:        site,
 			LinkService: opts.LinksService,
-			ErrorPage:   errorPage,
+		},
+	))
+	server.GET("/image", site.UploadImage)
+	server.POST("/image/upload", handlers.UploadImage(
+		handlers.UploadImageDeps{
+			BaseUrl:      opts.AppUrl,
+			Log:          opts.Log,
+			Site:         site,
+			ImageService: opts.ImageService,
+		},
+	))
+	server.GET("/image/view/:id", handlers.ViewImage(
+		handlers.ViewImageDeps{
+			BaseUrl:      opts.AppUrl,
+			Log:          opts.Log,
+			Site:         site,
+			ImageService: opts.ImageService,
+		},
+	))
+	server.GET("/i/f/:id", handlers.ResolveImage(
+		handlers.ResolveImageDeps{
+			Log:          opts.Log,
+			Site:         site,
+			ImageService: opts.ImageService,
 		},
 	))
 

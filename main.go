@@ -6,10 +6,13 @@ import (
 	"shorty/server"
 	"shorty/src/common/logger"
 	"shorty/src/common/tracing"
+	"shorty/src/services/image"
 	"shorty/src/services/links"
 	"shorty/src/services/ratelimit"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -45,8 +48,17 @@ func main() {
 		}
 	}
 
+	s3, err := minio.New(conf.MinioEndpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(conf.MinioAccessKey, conf.MinioAccessSecret, ""),
+		Secure: false,
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("error init minio client")
+	}
+
 	linksService := links.NewService(db, log, conf.AppUrl, tracer)
 	ratelimitService := ratelimit.NewService(rdb, log, tracer)
+	imageService := image.NewService(db, s3, log, tracer)
 
 	server.Run(server.ServerOpts{
 		Port:             uint16(conf.AppPort),
@@ -54,6 +66,7 @@ func main() {
 		Log:              log,
 		LinksService:     linksService,
 		RatelimitService: ratelimitService,
+		ImageService:     imageService,
 		Tracer:           tracer,
 	})
 }

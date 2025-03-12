@@ -85,6 +85,10 @@ func (s *Service) parseUrl(url string) (string, error) {
 	return url, nil
 }
 
+func (s *Service) newLink(shortId string) string {
+	return fmt.Sprintf("%s/s/%s", s.appUrl, shortId)
+}
+
 func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
 	log := s.log.WithContext(ctx)
 
@@ -105,7 +109,7 @@ func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
 
 	log.Info().Msgf("created link with id=%s", shortId)
 
-	return fmt.Sprintf("%s/%s", s.appUrl, shortId), nil
+	return s.newLink(shortId), nil
 }
 
 func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
@@ -121,7 +125,7 @@ func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
 	}
 
 	shortId := NewShortId(10)
-	link := fmt.Sprintf("%s/%s", s.appUrl, shortId)
+	link := s.newLink(shortId)
 
 	qrc, err := qrcode.New(link)
 	if err != nil {

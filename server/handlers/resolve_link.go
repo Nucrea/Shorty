@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	genericerror "shorty/server/pages/generic_error"
+	"shorty/server/site"
 	"shorty/src/common/logger"
 	"shorty/src/services/links"
 
@@ -9,33 +9,32 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type ResolveHDeps struct {
-	BaseUrl     string
+type ResolveLinkDeps struct {
 	Log         logger.Logger
-	ErrorPage   *genericerror.Page
+	Site        *site.Site
 	LinkService *links.Service
 }
 
-func NewLinkResolveH(d ResolveHDeps) gin.HandlerFunc {
+func ResolveLink(d ResolveLinkDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		shortId := c.Param("id")
 		if shortId == "" {
-			c.Redirect(302, d.BaseUrl)
+			d.Site.NotFound(c)
 			return
 		}
 
 		url, err := d.LinkService.GetByShortId(c, shortId)
 		if err == links.ErrNoSuchLink || err == links.ErrBadShortId {
-			d.ErrorPage.NotFound(c)
+			d.Site.NotFound(c)
 			return
 		}
 		if err != nil {
 			log.Error().Err(err).Msg("error getting shortlink")
-			d.ErrorPage.InternalError(c)
+			d.Site.InternalError(c)
 			return
 		}
 		if url == "" {
-			d.ErrorPage.NotFound(c)
+			d.Site.NotFound(c)
 			return
 		}
 

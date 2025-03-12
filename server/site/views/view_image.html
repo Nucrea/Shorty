@@ -1,0 +1,26 @@
+{{ define "content" }}
+<div class="bg-white rounded-md shadow-lg p-4">
+    <div class="flex flex-row justify-between items-start w-full">
+        <div class="flex flex-col">
+            <p class="mb-1 text-md">{{ .FileName }}</p>
+            <p class="mb-2 text-sm">{{ printf "%.1f" .SizeMB }} MB</p>
+        </div>
+        <button onclick="alert('Not implemented')" class="border rounded-md border-2 border-red-700 text-red-700 font-bold hover:bg-red-300 active:bg-red-200 pl-1 pr-1">Report</button>
+    </div>
+    <hr align="center" class="mt-1 w-full" size="2" color="#000000"/>
+    <!-- <div class="flex w-sm h-auto"> -->
+        <a href="{{ .ImageUrl }}" target="_self">
+            <img class="rounded-md w-auto h-[50vh]"src="{{ .ImageUrl }}" alt="{{ .FileName }}"/>
+        </a>
+    <!-- </div> -->
+    <hr align="center" class="mb-1 w-full" size="2" color="#000000"/>
+    <!-- <div class="flex flex-row"> -->
+        <p>URL:</p>
+        <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">{{ .ViewUrl }}</textarea>
+    <!-- </div> -->
+    <!-- <div class="flex flex-row"> -->
+        <p class="mt-1">BB-Code:</p>
+        <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">[URL={{ .ViewUrl }}][IMG]{{ .ThumbnailUrl }}[/IMG][/URL]</textarea>
+    <!-- </div> -->
+</div>
+{{ end }}
