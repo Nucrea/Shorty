@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func newInfoStorage(db *pgx.Conn, tracer trace.Tracer) *infoStorage {
+func newInfoStorage(db *pgxpool.Pool, tracer trace.Tracer) *infoStorage {
 	return &infoStorage{
 		db:     db,
 		tracer: tracer,
@@ -15,7 +16,7 @@ func newInfoStorage(db *pgx.Conn, tracer trace.Tracer) *infoStorage {
 }
 
 type infoStorage struct {
-	db     *pgx.Conn
+	db     *pgxpool.Pool
 	tracer trace.Tracer
 }
 
