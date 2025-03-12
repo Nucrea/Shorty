@@ -69,6 +69,8 @@ pipeline {
 
     post {
         always {
+            sh "docker logs ${env.SHORTY_NAME} || true"
+
             sh "docker stop ${env.SHORTY_NAME} || true"
             sh "docker rm -v ${env.SHORTY_NAME} || true"
 
