@@ -18,7 +18,19 @@ type CreateLinkDeps struct {
 }
 
 func CreateLink(d CreateLinkDeps) gin.HandlerFunc {
+	qrHandler := CreateQR(CreateQRDeps{
+		Log:              d.Log,
+		Site:             d.Site,
+		LinkService:      d.LinkService,
+		RatelimitService: d.RatelimitService,
+	})
+
 	return func(c *gin.Context) {
+		if c.Query("qr") != "" {
+			qrHandler(c)
+			return
+		}
+
 		url := c.Query("url")
 		if url == "" {
 			// p.IndexPage.WithError(c, "Bad url")

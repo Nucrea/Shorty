@@ -1,20 +1,20 @@
 {{ define "content" }}
-<div class="flex flex-col bg-white rounded-md shadow-xl overflow-hidden">
+<div class="flex flex-col justify-between bg-white rounded-md shadow-xl overflow-hidden w-[350px] h-[250px]">
     <div class="flex flex-row w-full rounded-md">
-        <div class="grow text-center p-2 bg-white">Link</div>
-        <div class="grow text-center p-2 bg-gray-600 hover:bg-gray-400">
+        <div class="grow text-center p-2 bg-white text-black">Link</div>
+        <div class="grow text-center p-2 bg-sky-600 hover:bg-sky-500">
             <a href="/image" target="_self">
-                <div>Image</div>
+                <div class="text-white">Image</div>
             </a>
         </div>
-        <div class="grow text-center p-2 bg-gray-600">File</div>
+        <div class="grow text-center p-2 bg-sky-600 text-white"></div>
     </div>
     <form action="/link/create" method="GET">
-        <div class="bg-white rounded-md p-8">
+        <div class="bg-white rounded-md p-4">
             <p class="mb-4">Shorten your link</p>
-            <div class="flex mb-4">
-                <input type="text" name="url" class="p-1 shadow-md rounded-l-md" placeholder="https://example.com" required>
-                <button class="flex rounded-r pl-2 pr-2 shadow-md bg-gray-300 hover:bg-sky-600 active:bg-sky-500 transition-all">Get</button>
+            <div class="flex rounded-md border-2 border-sky-600 mb-4 w-full">
+                <input type="text" name="url" class="grow p-1 shadow-md rounded-l-md" placeholder="https://example.com" required>
+                <button class="flex text-center rounded-r pl-2 pr-2 shadow-md bg-gray-300 hover:bg-sky-600 hover:text-white active:bg-sky-500 transition-all">Get</button>
             </div>
             <div class="flex flex-row gap-4 items-center justify-self-center">
                 <p>Link</p>

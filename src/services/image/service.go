@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"io"
 	"shorty/src/common/broker"
 	"shorty/src/common/logger"
 
@@ -48,7 +49,8 @@ func (s *Service) createThumbnail(ctx context.Context, imgBytes []byte) ([]byte,
 	_, span := s.tracer.Start(ctx, "image::createThumbnail")
 	defer span.End()
 
-	img, format, err := image.Decode(bytes.NewReader(imgBytes))
+	imgReader := bytes.NewReader(imgBytes)
+	imgInfo, format, err := image.DecodeConfig(imgReader)
 	if err != nil {
 		log.Error().Err(err).Msg("failed decoding image")
 		return nil, ErrInvalidFormat
@@ -58,7 +60,17 @@ func (s *Service) createThumbnail(ctx context.Context, imgBytes []byte) ([]byte,
 		return nil, ErrUnsupportedFormat
 	}
 
-	resized := transform.Resize(img, 600, 400, transform.Linear)
+	imgReader.Seek(0, io.SeekStart)
+	img, _, err := image.Decode(imgReader)
+	if err != nil {
+		log.Error().Err(err).Msg("failed decoding image")
+		return nil, ErrInvalidFormat
+	}
+
+	width := 200
+	height := width * imgInfo.Height / imgInfo.Width
+
+	resized := transform.Resize(img, width, height, transform.Linear)
 	buff := bytes.NewBuffer(nil)
 	if err := jpeg.Encode(buff, resized, nil); err != nil {
 		log.Error().Err(err).Msg("failed encoding thumbnail")

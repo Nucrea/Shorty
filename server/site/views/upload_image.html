@@ -1,22 +1,22 @@
 {{ define "content" }}
-<div class="flex flex-col bg-white rounded-md overflow-hidden shadow-xl">
+<div class="flex flex-col bg-white rounded-md overflow-hidden shadow-xl w-[350px] h-[250px]">
     <div class="flex flex-row justify-stretch">
-        <div class="grow text-center p-2 bg-gray-600 hover:bg-gray-400">
+        <div class="grow text-center p-2 bg-sky-600 hover:bg-sky-500">
             <a href="/link" target="_self">
-                <div>Link</div>
+                <div class="text-white">Link</div>
             </a>
         </div>
-        <div class="grow text-center p-2 bg-white">Image</div>
-        <div class="grow text-center p-2 bg-gray-600">File</div>
+        <div class="grow text-center p-2 bg-white text-black">Image</div>
+        <div class="grow text-center p-2 bg-sky-600 text-white"></div>
     </div>
     <form action="/image/upload" method="POST" enctype="multipart/form-data">
-        <div class="bg-white rounded-md p-8">
+        <div class="bg-white rounded-md p-4">
             <p class="mb-4">Upload your image</p>
             <input type="file" name="image" accept="image/jpeg" required>
-            <button class="flex rounded-r pl-2 pr-2 shadow-md bg-gray-300 hover:bg-sky-600 active:bg-sky-500 transition-all">Upload</button>
+            <button class="flex rounded mt-2 pl-2 pr-2 shadow-md bg-gray-300 hover:bg-sky-600 hover:text-white active:bg-sky-500 transition-all">Upload</button>
         </div>
     </form>
     <hr align="center" class="mt-1 w-full" size="2" color="#000000"/>
-    <p>15MB max, jpeg only</p>
+    <p class="p-1">15MB max, jpeg only</p>
 </div>
 {{ end }}

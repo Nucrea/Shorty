@@ -97,6 +97,13 @@ func Run(opts ServerOpts) {
 			ImageService: opts.ImageService,
 		},
 	))
+	server.GET("/i/t/:id", handlers.ResolveImage(
+		handlers.ResolveImageDeps{
+			Log:          opts.Log,
+			Site:         site,
+			ImageService: opts.ImageService,
+		},
+	))
 
 	opts.Log.Info().Msgf("Started server on port %d", opts.Port)
 	server.Run(fmt.Sprintf(":%d", opts.Port))
