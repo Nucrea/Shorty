@@ -13,7 +13,7 @@ import (
 	"shorty/src/common/logger"
 
 	"github.com/anthonynsimon/bild/transform"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/minio/minio-go/v7"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -26,7 +26,7 @@ var (
 	ErrInternal          = fmt.Errorf("internal error")
 )
 
-func NewService(pg *pgx.Conn, s3 *minio.Client, log logger.Logger, tracer trace.Tracer) *Service {
+func NewService(pg *pgxpool.Pool, s3 *minio.Client, log logger.Logger, tracer trace.Tracer) *Service {
 	return &Service{
 		log:         log,
 		tracer:      tracer,

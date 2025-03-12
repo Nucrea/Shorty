@@ -10,7 +10,7 @@ import (
 	"shorty/src/services/links"
 	"shorty/src/services/ratelimit"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/redis/go-redis/v9"
@@ -29,7 +29,7 @@ func main() {
 		panic(err)
 	}
 
-	db, err := pgx.Connect(ctx, conf.PostgresUrl)
+	dbPool, err := pgxpool.New(ctx, conf.PostgresUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error connecting to postgres")
 	}
@@ -56,9 +56,9 @@ func main() {
 		log.Fatal().Err(err).Msg("error init minio client")
 	}
 
-	linksService := links.NewService(db, log, conf.AppUrl, tracer)
+	linksService := links.NewService(dbPool, log, conf.AppUrl, tracer)
 	ratelimitService := ratelimit.NewService(rdb, log, tracer)
-	imageService := image.NewService(db, s3, log, tracer)
+	imageService := image.NewService(dbPool, s3, log, tracer)
 
 	server.Run(server.ServerOpts{
 		Port:             uint16(conf.AppPort),

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/yeqown/go-qrcode/v2"
 	"github.com/yeqown/go-qrcode/writer/standard"
 	"go.opentelemetry.io/otel/trace"
@@ -24,7 +24,7 @@ var (
 	ErrInternal   = errors.New("internal error")
 )
 
-func NewService(pgConn *pgx.Conn, log logger.Logger, appUrl string, tracer trace.Tracer) *Service {
+func NewService(pgConn *pgxpool.Pool, log logger.Logger, appUrl string, tracer trace.Tracer) *Service {
 	shortIdRegexp := regexp.MustCompile(`^\w{10}$`)
 	return &Service{
 		log:           log.WithService("links"),
