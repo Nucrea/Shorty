@@ -1,20 +1,31 @@
 {{ define "content" }}
-<form action="/link/create" method="GET">
-    <div class="bg-white rounded-md shadow-xl p-8">
-        <p class="mb-4">Shorten your link</p>
-        <div class="flex mb-4">
-            <input type="text" name="url" class="p-1 shadow-md rounded-l-md" placeholder="https://example.com" required>
-            <button class="flex rounded-r pl-2 pr-2 shadow-md bg-gray-300 hover:bg-sky-600 active:bg-sky-500 transition-all">Get</button>
+<div class="flex flex-col bg-white rounded-md shadow-xl overflow-hidden">
+    <div class="flex flex-row w-full rounded-md">
+        <div class="grow text-center p-2 bg-white">Link</div>
+        <div class="grow text-center p-2 bg-gray-600">
+            <a href="/image" target="_self">
+                <div>Image</div>
+            </a>
         </div>
-        <div class="flex flex-row gap-4 items-center justify-self-center">
-            <p>Link</p>
-            <label class="relative inline-flex cursor-pointer items-center">
-                <input id="switch-3" name="qr" type="checkbox" class="peer sr-only" />
-                <label for="switch-3" class="hidden"></label>
-                <div class="peer h-4 w-11 rounded border bg-slate-200 after:absolute after:-top-1 after:left-0 after:h-6 after:w-6 after:rounded-md after:border after:border-gray-300 after:bg-sky-600 after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-focus:ring-green-300"></div>
-            </label>
-            <p>QR</p>
-        </div>
+        <div class="grow text-center p-2 bg-gray-600">File</div>
     </div>
-</form>
+    <form action="/link/create" method="GET">
+        <div class="bg-white rounded-md p-8">
+            <p class="mb-4">Shorten your link</p>
+            <div class="flex mb-4">
+                <input type="text" name="url" class="p-1 shadow-md rounded-l-md" placeholder="https://example.com" required>
+                <button class="flex rounded-r pl-2 pr-2 shadow-md bg-gray-300 hover:bg-sky-600 active:bg-sky-500 transition-all">Get</button>
+            </div>
+            <div class="flex flex-row gap-4 items-center justify-self-center">
+                <p>Link</p>
+                <label class="relative inline-flex cursor-pointer items-center">
+                    <input id="switch-3" name="qr" type="checkbox" class="peer sr-only" />
+                    <label for="switch-3" class="hidden"></label>
+                    <div class="peer h-4 w-11 rounded border bg-slate-200 after:absolute after:-top-1 after:left-0 after:h-6 after:w-6 after:rounded-md after:border after:border-gray-300 after:bg-sky-600 after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-focus:ring-green-300"></div>
+                </label>
+                <p>QR</p>
+            </div>
+        </div>
+    </form>
+</div>
 {{ end }}

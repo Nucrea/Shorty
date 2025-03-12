@@ -5,12 +5,14 @@
             <p class="mb-1 text-md">{{ .FileName }}</p>
             <p class="mb-2 text-sm">{{ printf "%.1f" .SizeMB }} MB</p>
         </div>
-        <button class="border rounded-md border-2 border-red-700 text-red-700 font-bold hover:bg-red-300 active:bg-red-200 pl-1 pr-1">Report</button>
+        <button onclick="alert('Not implemented')" class="border rounded-md border-2 border-red-700 text-red-700 font-bold hover:bg-red-300 active:bg-red-200 pl-1 pr-1">Report</button>
     </div>
     <hr align="center" class="mt-1 w-full" size="2" color="#000000"/>
-    <a href="{{ .ImageUrl }}" target="_self">
-        <img width="800" height="600" class="rounded-md" src="{{ .ImageUrl }}" alt="{{ .FileName }}"/>
-    </a>
+    <!-- <div class="flex w-sm h-auto"> -->
+        <a href="{{ .ImageUrl }}" target="_self">
+            <img class="rounded-md w-auto h-[50vh]"src="{{ .ImageUrl }}" alt="{{ .FileName }}"/>
+        </a>
+    <!-- </div> -->
     <hr align="center" class="mb-1 w-full" size="2" color="#000000"/>
     <!-- <div class="flex flex-row"> -->
         <p>URL:</p>
