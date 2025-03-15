@@ -60,13 +60,13 @@ func main() {
 	ratelimitService := ratelimit.NewService(rdb, log, tracer)
 	imageService := image.NewService(dbPool, s3, log, tracer)
 
-	server.Run(server.ServerOpts{
-		Port:             uint16(conf.AppPort),
-		AppUrl:           conf.AppUrl,
+	srv := server.New(server.Opts{
+		Url:              conf.AppUrl,
 		Log:              log,
 		LinksService:     linksService,
 		RatelimitService: ratelimitService,
 		ImageService:     imageService,
 		Tracer:           tracer,
 	})
+	srv.Run(ctx, conf.AppPort)
 }

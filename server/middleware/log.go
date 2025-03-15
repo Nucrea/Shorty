@@ -1,4 +1,4 @@
-package server
+package middleware
 
 import (
 	"shorty/src/common/logger"
@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewRequestLogM(log logger.Logger) gin.HandlerFunc {
+func Log(log logger.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestId := c.GetHeader("X-Request-Id")
 		if requestId == "" {

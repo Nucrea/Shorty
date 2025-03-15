@@ -30,7 +30,6 @@ func NewService(pgConn *pgxpool.Pool, log logger.Logger, appUrl string, tracer t
 		log:           log.WithService("links"),
 		tracer:        tracer,
 		shortIdRegexp: shortIdRegexp,
-		appUrl:        appUrl,
 		storage:       NewStorage(pgConn, tracer),
 	}
 }
@@ -39,7 +38,6 @@ type Service struct {
 	log           logger.Logger
 	tracer        trace.Tracer
 	shortIdRegexp *regexp.Regexp
-	appUrl        string
 	storage       *storage
 }
 
@@ -85,49 +83,13 @@ func (s *Service) parseUrl(url string) (string, error) {
 	return url, nil
 }
 
-func (s *Service) newLink(shortId string) string {
-	return fmt.Sprintf("%s/s/%s", s.appUrl, shortId)
-}
-
-func (s *Service) CreateLink(ctx context.Context, url string) (string, error) {
+func (s *Service) MakeQR(ctx context.Context, url string) (string, error) {
 	log := s.log.WithContext(ctx)
 
-	ctx, span := s.tracer.Start(ctx, "links::CreateLink")
+	ctx, span := s.tracer.Start(ctx, "links::MakeQR")
 	defer span.End()
 
-	url, err := s.parseUrl(url)
-	if err != nil {
-		log.Info().Msgf("invalid input url %s", url)
-		return "", ErrBadUrl
-	}
-
-	shortId := NewShortId(10)
-	if err := s.storage.CreateLink(ctx, shortId, url); err != nil {
-		log.Error().Err(err).Msgf("creating link with storage")
-		return "", ErrInternal
-	}
-
-	log.Info().Msgf("created link with id=%s", shortId)
-
-	return s.newLink(shortId), nil
-}
-
-func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
-	log := s.log.WithContext(ctx)
-
-	ctx, span := s.tracer.Start(ctx, "links::CreateQR")
-	defer span.End()
-
-	url, err := s.parseUrl(url)
-	if err != nil {
-		log.Info().Msgf("invalid input url %s", url)
-		return "", ErrBadUrl
-	}
-
-	shortId := NewShortId(10)
-	link := s.newLink(shortId)
-
-	qrc, err := qrcode.New(link)
+	qrc, err := qrcode.New(url)
 	if err != nil {
 		log.Error().Msgf("creating QR Code for link=%s", url)
 		return "", ErrInternal
@@ -136,19 +98,35 @@ func (s *Service) CreateQR(ctx context.Context, url string) (string, error) {
 	buf := bytes.NewBuffer(nil)
 	wc := BytesWriterCloser{buf}
 
-	wr := standard.NewWithWriter(wc, standard.WithQRWidth(40))
+	wr := standard.NewWithWriter(wc, standard.WithQRWidth(20))
 	if err := qrc.Save(wr); err != nil {
 		log.Error().Msgf("saving QR Code for link=%s", url)
 		return "", ErrInternal
 	}
 
+	qrBase64 := base64.StdEncoding.EncodeToString(buf.Bytes())
+	return qrBase64, err
+}
+
+func (s *Service) Create(ctx context.Context, url string) (string, error) {
+	log := s.log.WithContext(ctx)
+
+	ctx, span := s.tracer.Start(ctx, "links::CreateShortlink")
+	defer span.End()
+
+	url, err := s.parseUrl(url)
+	if err != nil {
+		log.Info().Msgf("invalid input url %s", url)
+		return "", ErrBadUrl
+	}
+
+	shortId := NewShortId(10)
 	if err := s.storage.CreateLink(ctx, shortId, url); err != nil {
 		log.Error().Err(err).Msgf("creating qr and link with storage")
 		return "", ErrInternal
 	}
 
-	log.Info().Msgf("created QR Code for link=%s", url)
+	log.Info().Msgf("created shortlink with id=%s", shortId)
 
-	result := base64.StdEncoding.EncodeToString(buf.Bytes())
-	return result, nil
+	return shortId, nil
 }
