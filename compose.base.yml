@@ -37,7 +37,7 @@ services:
       - 9001:9001
 
   minio-init:
-    image: quay.io/minio/mc:latest
+    image: quay.io/minio/mc:RELEASE.2025-02-21T16-00-46Z
     depends_on:
       minio:
         condition: service_healthy
