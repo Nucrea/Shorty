@@ -8,19 +8,13 @@
         <button onclick="alert('Not implemented')" class="border rounded-md border-2 border-red-700 text-red-700 font-bold hover:bg-red-300 active:bg-red-200 pl-1 pr-1">Report</button>
     </div>
     <hr align="center" class="mt-1 w-full" size="2" color="#000000"/>
-    <!-- <div class="flex w-sm h-auto"> -->
-        <a href="{{ .ImageUrl }}" target="_self">
-            <img class="rounded-md w-auto h-[50vh]"src="{{ .ImageUrl }}" alt="{{ .FileName }}"/>
-        </a>
-    <!-- </div> -->
+    <a href="{{ .ImageUrl }}" target="_self">
+        <img class="rounded-md w-auto h-[50vh]"src="{{ .ImageUrl }}" alt="{{ .FileName }}"/>
+    </a>
     <hr align="center" class="mb-1 w-full" size="2" color="#000000"/>
-    <!-- <div class="flex flex-row"> -->
-        <p>URL:</p>
-        <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">{{ .ViewUrl }}</textarea>
-    <!-- </div> -->
-    <!-- <div class="flex flex-row"> -->
-        <p class="mt-1">BB-Code:</p>
-        <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">[URL={{ .ViewUrl }}][IMG]{{ .ThumbnailUrl }}[/IMG][/URL]</textarea>
-    <!-- </div> -->
+    <p>URL:</p>
+    <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">{{ .ViewUrl }}</textarea>
+    <p class="mt-1">BB-Code:</p>
+    <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">[URL={{ .ViewUrl }}][IMG]{{ .ThumbnailUrl }}[/IMG][/URL]</textarea>
 </div>
 {{ end }}

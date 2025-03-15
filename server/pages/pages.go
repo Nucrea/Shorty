@@ -1,4 +1,4 @@
-package site
+package pages
 
 import (
 	"embed"
@@ -42,32 +42,26 @@ func (s *Site) InternalError(c *gin.Context) {
 	s.err(c, 500, "Internal Error")
 }
 
-func (s *Site) CreateLink(c *gin.Context) {
-	s.template("views/create_link.html").Execute(c.Writer, nil)
+func (s *Site) LinkForm(c *gin.Context) {
+	s.template("views/link_form.html").Execute(c.Writer, nil)
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }
 
-func (s *Site) UploadImage(c *gin.Context) {
-	s.template("views/upload_image.html").Execute(c.Writer, nil)
+func (s *Site) ImageForm(c *gin.Context) {
+	s.template("views/image_form.html").Execute(c.Writer, nil)
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }
 
-func (s *Site) LinkResult(c *gin.Context, url string) {
-	s.template("views/link_result.html").Execute(c.Writer, LinkResultParams{Url: url})
+func (s *Site) LinkResult(c *gin.Context, url string, qrBase64 string) {
+	s.template("views/link_result.html").Execute(c.Writer, LinkResultParams{Shortlink: url, QRBase64: qrBase64})
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }
 
-func (s *Site) QRResult(c *gin.Context, imageBase64 string) {
-	s.template("views/qr_result.html").Execute(c.Writer, QRResultParams{ImageBase64: imageBase64})
-	c.Header("Content-Type", "text/html")
-	c.Status(200)
-}
-
-func (s *Site) ViewImage(c *gin.Context, p ViewImageParams) {
-	s.template("views/view_image.html").Execute(c.Writer, p)
+func (s *Site) ImageView(c *gin.Context, p ViewImageParams) {
+	s.template("views/image_view.html").Execute(c.Writer, p)
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }

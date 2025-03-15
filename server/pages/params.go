@@ -1,4 +1,4 @@
-package site
+package pages
 
 type ErrParams struct {
 	Status  int
@@ -6,11 +6,8 @@ type ErrParams struct {
 }
 
 type LinkResultParams struct {
-	Url string
-}
-
-type QRResultParams struct {
-	ImageBase64 string
+	Shortlink string
+	QRBase64  string
 }
 
 type ViewImageParams struct {

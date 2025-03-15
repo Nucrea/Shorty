@@ -14,8 +14,8 @@ create table if not exists images (
     size int not null,
     name varchar(256) not null,
     hash char(128) not null,
-    image_id char(32),
-    thumbnail_id char(32),
+    image_id char(32) not null,
+    thumbnail_id char(32) not null,
     created_at timestamp not null default now()
 );
 

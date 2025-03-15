@@ -1,13 +1,13 @@
 package server
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"io/fs"
-	"log"
 	"net/http"
-	"shorty/server/handlers"
-	"shorty/server/site"
+	"shorty/server/middleware"
+	"shorty/server/pages"
 	"shorty/src/common/logger"
 	"shorty/src/common/tracing"
 	"shorty/src/services/image"
@@ -21,90 +21,61 @@ import (
 //go:embed static/*
 var staticFS embed.FS
 
-type ServerOpts struct {
-	Port             uint16
-	AppUrl           string
+type Opts struct {
+	Url              string
 	Log              logger.Logger
+	Tracer           trace.Tracer
 	LinksService     *links.Service
 	RatelimitService *ratelimit.Service
 	ImageService     *image.Service
-	Tracer           trace.Tracer
 }
 
-func Run(opts ServerOpts) {
-	site := &site.Site{}
+func New(opts Opts) *server {
+	return &server{opts, &pages.Site{}}
+}
+
+type server struct {
+	Opts
+	pages *pages.Site
+}
+
+func (s *server) Run(ctx context.Context, port uint16) {
+	staticDir, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		s.Log.Fatal().Err(err).Msg("opening static files dir")
+	}
 
 	gin.SetMode(gin.ReleaseMode)
 
 	server := gin.New()
-	server.ContextWithFallback = true // Use it to allow getting values from c.Request.Context(). CRITICAL FOR TRACING
+	server.ContextWithFallback = true // allows getting values from gin ctx, needed for tracing
 
-	server.Use(gin.Recovery())
+	server.NoRoute(s.pages.NotFound)
+	server.Use(middleware.Recovery(s.pages.InternalError, s.Log, true))
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
 
-	staticDir, err := fs.Sub(staticFS, "static")
-	if err != nil {
-		log.Fatal(err)
-	}
 	server.StaticFS("/static", http.FS(staticDir))
 
-	server.Use(NewRequestLogM(opts.Log))
-	server.Use(tracing.NewMiddleware(opts.Tracer))
-	server.Use(NewRatelimitM(opts.RatelimitService, site))
+	server.Use(middleware.Log(s.Log))
+	server.Use(tracing.NewMiddleware(s.Tracer))
+	server.Use(middleware.Ratelimit(s.RatelimitService, s.pages))
 
 	server.GET("/", func(ctx *gin.Context) {
-		ctx.Redirect(302, fmt.Sprintf("%s/link", opts.AppUrl))
+		ctx.Redirect(302, "/link")
 	})
-	server.GET("/link", site.CreateLink)
-	server.GET("/link/create", handlers.CreateLink(
-		handlers.CreateLinkDeps{
-			Log:              opts.Log,
-			Site:             site,
-			LinkService:      opts.LinksService,
-			RatelimitService: opts.RatelimitService,
-		},
-	))
-	server.GET("/s/:id", handlers.ResolveLink(
-		handlers.ResolveLinkDeps{
-			Log:         opts.Log,
-			Site:        site,
-			LinkService: opts.LinksService,
-		},
-	))
-	server.GET("/image", site.UploadImage)
-	server.POST("/image/upload", handlers.UploadImage(
-		handlers.UploadImageDeps{
-			BaseUrl:      opts.AppUrl,
-			Log:          opts.Log,
-			Site:         site,
-			ImageService: opts.ImageService,
-		},
-	))
-	server.GET("/image/view/:id", handlers.ViewImage(
-		handlers.ViewImageDeps{
-			BaseUrl:      opts.AppUrl,
-			Log:          opts.Log,
-			Site:         site,
-			ImageService: opts.ImageService,
-		},
-	))
-	server.GET("/i/f/:id", handlers.ResolveImage(
-		handlers.ResolveImageDeps{
-			Log:          opts.Log,
-			Site:         site,
-			ImageService: opts.ImageService,
-		},
-	))
-	server.GET("/i/t/:id", handlers.ResolveImage(
-		handlers.ResolveImageDeps{
-			Log:          opts.Log,
-			Site:         site,
-			ImageService: opts.ImageService,
-		},
-	))
 
-	opts.Log.Info().Msgf("Started server on port %d", opts.Port)
-	server.Run(fmt.Sprintf(":%d", opts.Port))
+	server.GET("/link", s.pages.LinkForm)
+	server.POST("/link", s.LinkResult)
+	server.GET("/l/:id", s.LinkResolve)
+
+	server.GET("/image", s.pages.ImageForm)
+	server.POST("/image", s.ImageUpload)
+	server.GET("/image/view/:id", s.ImageView)
+	server.GET("/i/f/:id", s.ImageResolve)
+	server.GET("/i/t/:id", s.ImageResolve)
+
+	s.Log.Info().Msgf("Started server on port %d", port)
+	server.Run(fmt.Sprintf(":%d", port))
 }
