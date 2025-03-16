@@ -28,7 +28,7 @@ var (
 
 func NewService(pg *pgxpool.Pool, s3 *minio.Client, log logger.Logger, tracer trace.Tracer) *Service {
 	return &Service{
-		log:         log,
+		log:         log.WithService("image"),
 		tracer:      tracer,
 		fileStorage: newFileStorage(s3, tracer),
 		infoStorage: newInfoStorage(pg, tracer),

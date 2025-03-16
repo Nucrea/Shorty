@@ -10,6 +10,7 @@ import (
 	"shorty/server/pages"
 	"shorty/src/common/logger"
 	"shorty/src/common/tracing"
+	"shorty/src/services/files"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
 	"shorty/src/services/ratelimit"
@@ -28,6 +29,7 @@ type Opts struct {
 	LinksService     *links.Service
 	RatelimitService *ratelimit.Service
 	ImageService     *image.Service
+	FileService      *files.Service
 }
 
 func New(opts Opts) *server {
@@ -75,6 +77,11 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.GET("/image/view/:id", s.ImageView)
 	server.GET("/i/f/:id", s.ImageResolve)
 	server.GET("/i/t/:id", s.ImageResolve)
+
+	server.GET("/file", s.pages.FileForm)
+	server.POST("/file", s.FileUpload)
+	server.GET("/file/view/:id", s.FileView)
+	server.GET("/f/:id/:name", s.FileResolve)
 
 	s.Log.Info().Msgf("Started server on port %d", port)
 	server.Run(fmt.Sprintf(":%d", port))

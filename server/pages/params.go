@@ -17,3 +17,10 @@ type ViewImageParams struct {
 	ImageUrl     string
 	ThumbnailUrl string
 }
+
+type ViewFileParams struct {
+	FileName        string
+	FileSizeMB      float32
+	FileViewUrl     string
+	FileDownloadUrl string
+}

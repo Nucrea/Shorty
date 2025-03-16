@@ -54,6 +54,12 @@ func (s *Site) ImageForm(c *gin.Context) {
 	c.Status(200)
 }
 
+func (s *Site) FileForm(c *gin.Context) {
+	s.template("views/file_form.html").Execute(c.Writer, nil)
+	c.Header("Content-Type", "text/html")
+	c.Status(200)
+}
+
 func (s *Site) LinkResult(c *gin.Context, url string, qrBase64 string) {
 	s.template("views/link_result.html").Execute(c.Writer, LinkResultParams{Shortlink: url, QRBase64: qrBase64})
 	c.Header("Content-Type", "text/html")
@@ -62,6 +68,12 @@ func (s *Site) LinkResult(c *gin.Context, url string, qrBase64 string) {
 
 func (s *Site) ImageView(c *gin.Context, p ViewImageParams) {
 	s.template("views/image_view.html").Execute(c.Writer, p)
+	c.Header("Content-Type", "text/html")
+	c.Status(200)
+}
+
+func (s *Site) FileView(c *gin.Context, p ViewFileParams) {
+	s.template("views/file_view.html").Execute(c.Writer, p)
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }
