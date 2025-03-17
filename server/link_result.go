@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net/url"
 	"shorty/src/services/links"
 
 	"github.com/gin-gonic/gin"
@@ -9,18 +10,17 @@ import (
 )
 
 func (s *server) LinkResult(c *gin.Context) {
-	url := c.PostForm("url")
-	if url == "" {
-		// p.IndexPage.WithError(c, "Bad url")
+	inputUrl := c.PostForm("url")
+	if inputUrl == "" {
 		log.Error().Msg("empty url")
-		s.pages.LinkForm(c)
+		c.Redirect(302, "/link?err="+url.QueryEscape("empty url"))
 		return
 	}
 
-	shortId, err := s.LinksService.Create(c, url)
+	shortId, err := s.LinksService.Create(c, inputUrl)
 	if err == links.ErrBadUrl {
 		log.Error().Msg("bad url")
-		s.pages.LinkForm(c)
+		c.Redirect(302, "/link?err="+url.QueryEscape(err.Error()))
 		return
 	}
 	if err != nil {
