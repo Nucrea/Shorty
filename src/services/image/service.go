@@ -94,7 +94,7 @@ func (s *Service) UploadImage(ctx context.Context, name string, imgBytes []byte)
 	_, span := s.tracer.Start(ctx, "image::UploadImage")
 	defer span.End()
 
-	if size := len(imgBytes); size > 15*1024*1024 { //temporary 15MB max
+	if size := len(imgBytes); size > 5*1024*1024 { //temporary 15MB max
 		log.Info().Msgf("rejected too heavy image with size %d", size)
 		return nil, ErrImageTooLarge
 	}
