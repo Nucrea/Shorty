@@ -7,9 +7,9 @@ import (
 	"shorty/src/common/logger"
 	"shorty/src/common/tracing"
 	"shorty/src/services/files"
+	"shorty/src/services/guard"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
-	"shorty/src/services/ratelimit"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/minio/minio-go/v7"
@@ -58,18 +58,18 @@ func main() {
 	}
 
 	linksService := links.NewService(dbPool, log, conf.AppUrl, tracer)
-	ratelimitService := ratelimit.NewService(rdb, log, tracer)
+	guardService := guard.NewService(rdb, log, tracer)
 	imageService := image.NewService(dbPool, s3, log, tracer)
 	fileService := files.NewService(dbPool, s3, log, tracer)
 
 	srv := server.New(server.Opts{
-		Url:              conf.AppUrl,
-		Log:              log,
-		Tracer:           tracer,
-		LinksService:     linksService,
-		RatelimitService: ratelimitService,
-		ImageService:     imageService,
-		FileService:      fileService,
+		Url:          conf.AppUrl,
+		Log:          log,
+		Tracer:       tracer,
+		LinksService: linksService,
+		GuardService: guardService,
+		ImageService: imageService,
+		FileService:  fileService,
 	})
 	srv.Run(ctx, conf.AppPort)
 }

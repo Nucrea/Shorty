@@ -7,6 +7,7 @@ toolchain go1.23.6
 require (
 	github.com/anthonynsimon/bild v0.14.0
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
+	github.com/dchest/captcha v1.1.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/minio/minio-go/v7 v7.0.88

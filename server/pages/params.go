@@ -5,6 +5,16 @@ type ErrParams struct {
 	Message string
 }
 
+type LinkFormParams struct {
+	Id            string
+	CaptchaBase64 string
+}
+
+type ImageFormParams struct {
+	Id            string
+	CaptchaBase64 string
+}
+
 type LinkResultParams struct {
 	Shortlink string
 	QRBase64  string
@@ -23,4 +33,6 @@ type ViewFileParams struct {
 	FileSizeMB      float32
 	FileViewUrl     string
 	FileDownloadUrl string
+	CaptchaId       string
+	CaptchaBase64   string
 }

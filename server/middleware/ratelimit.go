@@ -2,22 +2,22 @@ package middleware
 
 import (
 	"shorty/server/pages"
-	"shorty/src/services/ratelimit"
+	"shorty/src/services/guard"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Ratelimit(
-	ratelimitService *ratelimit.Service,
+	guardService *guard.Service,
 	site *pages.Site,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := ratelimitService.Check(c, c.ClientIP())
-		if err == ratelimit.ErrTooManyRequests {
+		err := guardService.CheckIP(c, c.ClientIP())
+		if err == guard.ErrTooManyRequests {
 			site.TooManyRequests(c)
 			return
 		}
-		if err == ratelimit.ErrTemporaryBanned {
+		if err == guard.ErrTemporaryBanned {
 			site.TemporarilyBanned(c)
 			return
 		}

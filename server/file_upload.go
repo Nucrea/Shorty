@@ -3,12 +3,20 @@ package server
 import (
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
 
 func (s *server) FileUpload(c *gin.Context) {
+	id, token := c.PostForm("id"), c.PostForm("token")
+	err := s.GuardService.CheckCaptcha(id, token)
+	if err != nil {
+		c.Redirect(302, "/file?err="+url.QueryEscape("captcha wrong or expired"))
+		return
+	}
+
 	header, err := c.FormFile("file")
 	if err != nil {
 		log.Error().Err(err).Msg("error getting file from request")

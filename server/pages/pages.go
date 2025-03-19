@@ -48,14 +48,14 @@ func (s *Site) LinkForm(c *gin.Context) {
 	c.Status(200)
 }
 
-func (s *Site) ImageForm(c *gin.Context) {
-	s.template("views/image_form.html").Execute(c.Writer, nil)
+func (s *Site) ImageForm(c *gin.Context, id, captchabase64 string) {
+	s.template("views/image_form.html").Execute(c.Writer, ImageFormParams{Id: id, CaptchaBase64: captchabase64})
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }
 
-func (s *Site) FileForm(c *gin.Context) {
-	s.template("views/file_form.html").Execute(c.Writer, nil)
+func (s *Site) FileForm(c *gin.Context, id, captchabase64 string) {
+	s.template("views/file_form.html").Execute(c.Writer, LinkFormParams{Id: id, CaptchaBase64: captchabase64})
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }

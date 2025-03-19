@@ -25,6 +25,8 @@ func (s *server) FileView(c *gin.Context) {
 		return
 	}
 
+	captcha, _ := s.GuardService.CreateCaptcha()
+
 	viewUrl := fmt.Sprintf("%s/file/view/%s", s.Url, meta.Id)
 	downloadUrl := fmt.Sprintf("%s/f/%s/%s", s.Url, meta.Id, meta.Name)
 
@@ -33,5 +35,7 @@ func (s *server) FileView(c *gin.Context) {
 		FileSizeMB:      float32(meta.Size) / (1024 * 1024),
 		FileViewUrl:     viewUrl,
 		FileDownloadUrl: downloadUrl,
+		CaptchaId:       captcha.Id,
+		CaptchaBase64:   captcha.ImageBase64,
 	})
 }

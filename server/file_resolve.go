@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+	"net/url"
 	"shorty/src/services/files"
 
 	"github.com/gin-gonic/gin"
@@ -10,6 +12,13 @@ func (s *server) FileResolve(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		s.pages.NotFound(c)
+		return
+	}
+
+	captchaId, captchaToken := c.Query("id"), c.Query("token")
+	err := s.GuardService.CheckCaptcha(captchaId, captchaToken)
+	if err != nil {
+		c.Redirect(302, fmt.Sprintf("/file/view/%s?err=%s", id, url.QueryEscape("captcha wrong or expired")))
 		return
 	}
 

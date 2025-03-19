@@ -7,13 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/http"
 	"net/http/httputil"
 	"os"
 	"runtime"
 	"shorty/src/common/logger"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -78,10 +76,6 @@ func Recovery(handle gin.HandlerFunc, logger logger.Logger, debugMode bool) gin.
 	}
 }
 
-func defaultHandleRecovery(c *gin.Context, _ any) {
-	c.AbortWithStatus(http.StatusInternalServerError)
-}
-
 // stack returns a nicely formatted stack frame, skipping skip frames.
 func stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
@@ -144,9 +138,4 @@ func function(pc uintptr) []byte {
 	}
 	name = bytes.ReplaceAll(name, centerDot, dot)
 	return name
-}
-
-// timeFormat returns a customized time string for logger.
-func timeFormat(t time.Time) string {
-	return t.Format("2006/01/02 - 15:04:05")
 }
