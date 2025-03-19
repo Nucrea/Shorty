@@ -3,9 +3,9 @@ package files
 import (
 	"context"
 	"errors"
+	"shorty/src/common/assets"
 	"shorty/src/common/broker"
 	"shorty/src/common/logger"
-	"shorty/src/common/s3"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/minio/minio-go/v7"
@@ -18,84 +18,97 @@ var (
 	ErrTooBig   = errors.New("file too big")
 )
 
+const (
+	MaxSize = 20 * 1024 * 1024
+)
+
 func NewService(pg *pgxpool.Pool, mc *minio.Client, log logger.Logger, tracer trace.Tracer) *Service {
 	return &Service{
-		log:         log.WithService("files"),
-		tracer:      tracer,
-		fileStorage: s3.NewFileStorage(mc, tracer, "files"),
-		infoStorage: newInfoStorage(pg, tracer),
+		log:          log.WithService("files"),
+		tracer:       tracer,
+		assetStorage: assets.NewStorage(pg, mc, tracer, "files"),
+		infoStorage:  newMetadataRepo(pg, tracer),
 	}
 }
 
 type Service struct {
-	log         logger.Logger
-	tracer      trace.Tracer
-	broker      broker.Broker
-	fileStorage *s3.FileStorage
-	infoStorage *infoStorage
+	log          logger.Logger
+	tracer       trace.Tracer
+	broker       broker.Broker
+	assetStorage *assets.Storage
+	infoStorage  *metadataRepo
 }
 
-func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte) (*FileInfoDTO, error) {
+func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte) (*FileMetadataDTO, error) {
 	log := s.log.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "files::UploadFile")
 	defer span.End()
 
-	if len(fileBytes) > 20*1024*1024 {
+	if len(fileBytes) > MaxSize {
 		return nil, ErrTooBig
 	}
 
-	resourceId := NewShortId(32)
-	if err := s.fileStorage.SaveFile(ctx, resourceId, fileBytes); err != nil {
-		log.Error().Err(err).Msg("err saving file")
+	asset := assets.AssetDTO{
+		Id:    NewShortId(32),
+		Size:  len(fileBytes),
+		Hash:  "sdfsdsd",
+		Bytes: fileBytes,
+	}
+
+	if _, err := s.assetStorage.SaveAssets(ctx, asset); err != nil {
+		log.Error().Err(err).Msg("err saving file asset")
 		return nil, ErrInternal
 	}
 
-	shortId := NewShortId(32)
-	result, err := s.infoStorage.SaveFileInfo(ctx, FileInfoDTO{
-		ShortId:    shortId,
-		Name:       name,
-		Size:       len(fileBytes),
-		ResourceId: resourceId,
-	})
-	if err != nil {
+	metadata := &FileMetadataDTO{
+		Id:     NewShortId(32),
+		FileId: asset.Id,
+		Name:   name,
+	}
+	if err := s.infoStorage.SaveFileMetadata(ctx, *metadata); err != nil {
 		log.Error().Err(err).Msg("err saving file info")
 		return nil, ErrInternal
 	}
 
-	return result, nil
+	return metadata, nil
 }
 
-func (s *Service) GetFileInfo(ctx context.Context, shortId string) (*FileInfoDTO, error) {
+func (s *Service) GetFileMetadata(ctx context.Context, id string) (*FileMetadataExDTO, error) {
 	log := s.log.WithContext(ctx)
 
-	ctx, span := s.tracer.Start(ctx, "files::GetFileInfo")
+	ctx, span := s.tracer.Start(ctx, "files::GetFileMetadata")
 	defer span.End()
 
-	fileInfo, err := s.infoStorage.GetFileInfo(ctx, shortId)
+	meta, err := s.infoStorage.GetFileMetadata(ctx, id)
 	if err != nil {
 		log.Error().Err(err).Msg("failed getting file info")
 		return nil, ErrInternal
 	}
-	if fileInfo == nil {
-		log.Info().Msgf("not found file with id=%s", shortId)
+	if meta == nil {
+		log.Info().Msgf("not found file with id=%s", id)
 		return nil, ErrNotFound
 	}
 
-	return fileInfo, nil
+	return meta, nil
 }
 
-func (s *Service) GetFile(ctx context.Context, resourceId string) ([]byte, error) {
+func (s *Service) GetFileBytes(ctx context.Context, id string) ([]byte, error) {
 	log := s.log.WithContext(ctx)
 
-	ctx, span := s.tracer.Start(ctx, "files::GetFileInfo")
+	ctx, span := s.tracer.Start(ctx, "files::GetFileBytes")
 	defer span.End()
 
-	fileBytes, err := s.fileStorage.GetFile(ctx, resourceId)
+	meta, err := s.GetFileMetadata(ctx, id)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed getting file (id=%s) from storage", resourceId)
+		return nil, err
+	}
+
+	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, meta.FileId)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed getting file (id=%s, file_id=%s) from storage", id, meta.FileId)
 		return nil, ErrInternal
 	}
 
-	return fileBytes, nil
+	return assetBytes, nil
 }

@@ -8,13 +8,13 @@ import (
 )
 
 func (s *server) LinkResolve(c *gin.Context) {
-	shortId := c.Param("id")
-	if shortId == "" {
+	id := c.Param("id")
+	if id == "" {
 		s.pages.NotFound(c)
 		return
 	}
 
-	url, err := s.LinksService.GetByShortId(c, shortId)
+	url, err := s.LinksService.GetByShortId(c, id)
 	if err == links.ErrNoSuchLink || err == links.ErrBadShortId {
 		s.pages.NotFound(c)
 		return

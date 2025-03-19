@@ -7,13 +7,24 @@ import (
 )
 
 func (s *server) ImageResolve(c *gin.Context) {
-	shortId := c.Param("id")
-	if shortId == "" {
+	id := c.Param("id")
+	if id == "" {
 		s.pages.NotFound(c)
 		return
 	}
 
-	img, err := s.ImageService.GetFile(c, shortId)
+	isThumbnail := false
+	switch c.Param("type") {
+	case "o":
+		isThumbnail = false
+	case "t":
+		isThumbnail = true
+	default:
+		s.pages.NotFound(c)
+		return
+	}
+
+	img, err := s.ImageService.GetImageBytes(c, id, isThumbnail)
 	if err == image.ErrImageNotFound {
 		s.pages.NotFound(c)
 		return

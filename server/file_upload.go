@@ -26,13 +26,13 @@ func (s *server) FileUpload(c *gin.Context) {
 
 	bytes, _ := io.ReadAll(file)
 
-	info, err := s.FileService.UploadFile(c, header.Filename, bytes)
+	meta, err := s.FileService.UploadFile(c, header.Filename, bytes)
 	if err != nil {
 		log.Error().Err(err).Msg("error uploading file")
 		s.pages.InternalError(c)
 		return
 	}
 
-	viewUrl := fmt.Sprintf("/file/view/%s", info.ShortId)
+	viewUrl := fmt.Sprintf("/file/view/%s", meta.Id)
 	c.Redirect(302, viewUrl)
 }

@@ -9,13 +9,13 @@ import (
 )
 
 func (s *server) FileView(c *gin.Context) {
-	shortId := c.Param("id")
-	if shortId == "" {
+	id := c.Param("id")
+	if id == "" {
 		s.pages.NotFound(c)
 		return
 	}
 
-	info, err := s.FileService.GetFileInfo(c, shortId)
+	meta, err := s.FileService.GetFileMetadata(c, id)
 	if err == files.ErrNotFound {
 		s.pages.NotFound(c)
 		return
@@ -25,12 +25,12 @@ func (s *server) FileView(c *gin.Context) {
 		return
 	}
 
-	viewUrl := fmt.Sprintf("%s/file/view/%s", s.Url, info.ShortId)
-	downloadUrl := fmt.Sprintf("%s/f/%s/%s", s.Url, info.ResourceId, info.Name)
+	viewUrl := fmt.Sprintf("%s/file/view/%s", s.Url, meta.Id)
+	downloadUrl := fmt.Sprintf("%s/f/%s/%s", s.Url, meta.Id, meta.Name)
 
 	s.pages.FileView(c, pages.ViewFileParams{
-		FileName:        info.Name,
-		FileSizeMB:      float32(info.Size) / (1024 * 1024),
+		FileName:        meta.Name,
+		FileSizeMB:      float32(meta.Size) / (1024 * 1024),
 		FileViewUrl:     viewUrl,
 		FileDownloadUrl: downloadUrl,
 	})

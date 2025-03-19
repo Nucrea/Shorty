@@ -7,13 +7,13 @@ import (
 )
 
 func (s *server) FileResolve(c *gin.Context) {
-	shortId := c.Param("id")
-	if shortId == "" {
+	id := c.Param("id")
+	if id == "" {
 		s.pages.NotFound(c)
 		return
 	}
 
-	fileBytes, err := s.FileService.GetFile(c, shortId)
+	fileBytes, err := s.FileService.GetFileBytes(c, id)
 	if err == files.ErrNotFound {
 		s.pages.NotFound(c)
 		return

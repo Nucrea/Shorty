@@ -75,8 +75,7 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.GET("/image", s.pages.ImageForm)
 	server.POST("/image", s.ImageUpload)
 	server.GET("/image/view/:id", s.ImageView)
-	server.GET("/i/f/:id", s.ImageResolve)
-	server.GET("/i/t/:id", s.ImageResolve)
+	server.GET("/i/:type/:id", s.ImageResolve)
 
 	server.GET("/file", s.pages.FileForm)
 	server.POST("/file", s.FileUpload)
