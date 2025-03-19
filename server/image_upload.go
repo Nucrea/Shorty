@@ -11,10 +11,17 @@ import (
 )
 
 func (s *server) ImageUpload(c *gin.Context) {
+	id, token := c.PostForm("id"), c.PostForm("token")
+	err := s.GuardService.CheckCaptcha(id, token)
+	if err != nil {
+		c.Redirect(302, "/image?err="+url.QueryEscape("captcha wrong or expired"))
+		return
+	}
+
 	header, err := c.FormFile("image")
 	if err != nil {
 		log.Error().Err(err).Msg("error getting image from request")
-		c.Redirect(302, "image?err="+url.QueryEscape(err.Error()))
+		c.Redirect(302, "/image?err="+url.QueryEscape(err.Error()))
 		return
 	}
 
@@ -28,10 +35,10 @@ func (s *server) ImageUpload(c *gin.Context) {
 
 	bytes, _ := io.ReadAll(file)
 
-	info, err := s.ImageService.UploadImage(c, header.Filename, bytes)
+	meta, err := s.ImageService.UploadImage(c, header.Filename, bytes)
 	if err == image.ErrInvalidFormat || err == image.ErrUnsupportedFormat || err == image.ErrImageTooLarge {
 		log.Error().Err(err).Msg("error getting image from request")
-		c.Redirect(302, "image?err="+url.QueryEscape(err.Error()))
+		c.Redirect(302, "/image?err="+url.QueryEscape(err.Error()))
 		return
 	}
 	if err != nil {
@@ -40,6 +47,6 @@ func (s *server) ImageUpload(c *gin.Context) {
 		return
 	}
 
-	imgUrl := fmt.Sprintf("/image/view/%s", info.ShortId)
+	imgUrl := fmt.Sprintf("/image/view/%s", meta.Id)
 	c.Redirect(302, imgUrl)
 }

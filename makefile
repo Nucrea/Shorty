@@ -20,3 +20,7 @@ run-dev:
 	SHORTY_POSTGRES_URL=postgres://postgres:postgres@localhost:5432/postgres \
 	SHORTY_REDIS_URL=redis://localhost:6379 \
 	go run .
+
+.PHONY: pgclear
+pgclear:
+	docker compose down -v postgres && docker compose up -d postgres

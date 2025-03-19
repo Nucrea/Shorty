@@ -42,8 +42,7 @@ pipeline {
                     -d redis:7.4.2-alpine"
 
                 sh 'sleep 3'
-                sh "psql ${env.PSQL_URL} -f ./sql/db.sql"
-                sh "for file in ./sql/migrations/*.sql; do psql ${env.PSQL_URL} -f \$file; done"
+                sh "for file in ./sql/*.sql; do psql ${env.PSQL_URL} -f \$file; done"
             }
         }
         stage('Check running') {

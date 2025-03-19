@@ -1,18 +1,17 @@
 package image
 
-type ImageInfoDTO struct {
+type ImageMetadataDTO struct {
 	Id          string
-	ShortId     string
-	Size        int
-	Hash        string
 	Name        string
-	ImageId     string
+	OriginalId  string
 	ThumbnailId string
 }
 
-type ImageDTO struct {
-	Id    string
-	Name  string
-	Size  int
-	Bytes []byte
+type ImageMetadataExDTO struct {
+	Id          string
+	Name        string
+	Size        int
+	Hash        string
+	OriginalId  string
+	ThumbnailId string
 }

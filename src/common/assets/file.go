@@ -1,4 +1,4 @@
-package image
+package assets
 
 import (
 	"bytes"
@@ -8,26 +8,26 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func newFileStorage(s3 *minio.Client, tracer trace.Tracer) *fileStorage {
-	return &fileStorage{
+func newFileRepo(s3 *minio.Client, tracer trace.Tracer, bucket string) *fileRepo {
+	return &fileRepo{
+		bucket: bucket,
 		s3:     s3,
 		tracer: tracer,
 	}
 }
 
-type fileStorage struct {
+type fileRepo struct {
+	bucket string
 	s3     *minio.Client
 	tracer trace.Tracer
 }
 
-func (f *fileStorage) SaveFile(ctx context.Context, name string, img []byte) error {
+func (f *fileRepo) SaveFile(ctx context.Context, id string, rBytes []byte) error {
 	_, span := f.tracer.Start(ctx, "s3::SaveFile")
 	defer span.End()
 
-	bucketName := "images"
-
-	opts := minio.PutObjectOptions{ContentType: "image/jpeg"}
-	_, err := f.s3.PutObject(ctx, bucketName, name, bytes.NewReader(img), int64(len(img)), opts)
+	opts := minio.PutObjectOptions{} //ContentType: "image/jpeg"}
+	_, err := f.s3.PutObject(ctx, f.bucket, id, bytes.NewReader(rBytes), int64(len(rBytes)), opts)
 	if err != nil {
 		return err
 	}
@@ -35,14 +35,12 @@ func (f *fileStorage) SaveFile(ctx context.Context, name string, img []byte) err
 	return nil
 }
 
-func (f *fileStorage) GetFile(ctx context.Context, name string) ([]byte, error) {
+func (f *fileRepo) GetFile(ctx context.Context, id string) ([]byte, error) {
 	_, span := f.tracer.Start(ctx, "s3::GetFile")
 	defer span.End()
 
-	bucketName := "images"
-
 	//TODO: return err only when db access fails
-	obj, err := f.s3.GetObject(ctx, bucketName, name, minio.GetObjectOptions{})
+	obj, err := f.s3.GetObject(ctx, f.bucket, id, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, err
 	}

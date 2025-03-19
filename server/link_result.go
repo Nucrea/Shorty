@@ -17,7 +17,7 @@ func (s *server) LinkResult(c *gin.Context) {
 		return
 	}
 
-	shortId, err := s.LinksService.Create(c, inputUrl)
+	id, err := s.LinksService.Create(c, inputUrl)
 	if err == links.ErrBadUrl {
 		log.Error().Msg("bad url")
 		c.Redirect(302, "/link?err="+url.QueryEscape(err.Error()))
@@ -29,7 +29,7 @@ func (s *server) LinkResult(c *gin.Context) {
 		return
 	}
 
-	resultUrl := fmt.Sprintf("%s/l/%s", s.Url, shortId)
+	resultUrl := fmt.Sprintf("%s/l/%s", s.Url, id)
 	qrBase64, err := s.LinksService.MakeQR(c, resultUrl)
 	if err != nil {
 		log.Error().Err(err).Msg("error creating qr")

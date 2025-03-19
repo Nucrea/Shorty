@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"shorty/src/common"
 	"shorty/src/common/logger"
 	"strings"
 
@@ -27,18 +28,18 @@ var (
 func NewService(pgConn *pgxpool.Pool, log logger.Logger, appUrl string, tracer trace.Tracer) *Service {
 	shortIdRegexp := regexp.MustCompile(`^\w{10}$`)
 	return &Service{
-		log:           log.WithService("links"),
-		tracer:        tracer,
-		shortIdRegexp: shortIdRegexp,
-		storage:       NewStorage(pgConn, tracer),
+		log:      log.WithService("links"),
+		tracer:   tracer,
+		idRegexp: shortIdRegexp,
+		storage:  NewStorage(pgConn, tracer),
 	}
 }
 
 type Service struct {
-	log           logger.Logger
-	tracer        trace.Tracer
-	shortIdRegexp *regexp.Regexp
-	storage       *storage
+	log      logger.Logger
+	tracer   trace.Tracer
+	idRegexp *regexp.Regexp
+	storage  *storage
 }
 
 func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, error) {
@@ -47,7 +48,7 @@ func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, erro
 	ctx, span := s.tracer.Start(ctx, "links::GetByShortId")
 	defer span.End()
 
-	if !s.shortIdRegexp.MatchString(linkId) {
+	if !s.idRegexp.MatchString(linkId) {
 		return "", ErrBadShortId
 	}
 
@@ -120,13 +121,13 @@ func (s *Service) Create(ctx context.Context, url string) (string, error) {
 		return "", ErrBadUrl
 	}
 
-	shortId := NewShortId(10)
-	if err := s.storage.CreateLink(ctx, shortId, url); err != nil {
+	id := common.NewShortId(10)
+	if err := s.storage.CreateLink(ctx, id, url); err != nil {
 		log.Error().Err(err).Msgf("creating qr and link with storage")
 		return "", ErrInternal
 	}
 
-	log.Info().Msgf("created shortlink with id=%s", shortId)
+	log.Info().Msgf("created shortlink with id=%s", id)
 
-	return shortId, nil
+	return id, nil
 }

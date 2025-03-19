@@ -45,6 +45,7 @@ services:
       /bin/sh -c "
       /usr/bin/mc alias set myminio http://minio:9000 miniouser miniouser;
       /usr/bin/mc mb myminio/images;
+      /usr/bin/mc mb myminio/files;
       /usr/bin/mc anonymous set public myminio/images;
       /usr/bin/mc admin accesskey create myminio --access-key miniokey --secret-key miniokey;
       exit 0;

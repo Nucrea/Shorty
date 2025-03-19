@@ -1,4 +1,4 @@
-package ratelimit
+package guard
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type storage struct {
 	tracer trace.Tracer
 }
 
-func NewStorage(rdb *redis.Client, tracer trace.Tracer) *storage {
+func newStorage(rdb *redis.Client, tracer trace.Tracer) *storage {
 	return &storage{
 		rdb:    rdb,
 		tracer: tracer,

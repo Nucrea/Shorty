@@ -10,9 +10,10 @@ import (
 	"shorty/server/pages"
 	"shorty/src/common/logger"
 	"shorty/src/common/tracing"
+	"shorty/src/services/files"
+	"shorty/src/services/guard"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
-	"shorty/src/services/ratelimit"
 
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/trace"
@@ -22,12 +23,13 @@ import (
 var staticFS embed.FS
 
 type Opts struct {
-	Url              string
-	Log              logger.Logger
-	Tracer           trace.Tracer
-	LinksService     *links.Service
-	RatelimitService *ratelimit.Service
-	ImageService     *image.Service
+	Url          string
+	Log          logger.Logger
+	Tracer       trace.Tracer
+	LinksService *links.Service
+	GuardService *guard.Service
+	ImageService *image.Service
+	FileService  *files.Service
 }
 
 func New(opts Opts) *server {
@@ -56,11 +58,11 @@ func (s *server) Run(ctx context.Context, port uint16) {
 		ctx.Status(200)
 	})
 
-	server.StaticFS("/static", http.FS(staticDir))
+	StaticFS(server, "/static", http.FS(staticDir))
 
 	server.Use(middleware.Log(s.Log))
 	server.Use(tracing.NewMiddleware(s.Tracer))
-	server.Use(middleware.Ratelimit(s.RatelimitService, s.pages))
+	server.Use(middleware.Ratelimit(s.GuardService, s.pages))
 
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(302, "/link")
@@ -70,11 +72,15 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.POST("/link", s.LinkResult)
 	server.GET("/l/:id", s.LinkResolve)
 
-	server.GET("/image", s.pages.ImageForm)
+	server.GET("/image", s.ImageForm)
 	server.POST("/image", s.ImageUpload)
 	server.GET("/image/view/:id", s.ImageView)
-	server.GET("/i/f/:id", s.ImageResolve)
-	server.GET("/i/t/:id", s.ImageResolve)
+	server.GET("/i/:type/:id", s.ImageResolve)
+
+	server.GET("/file", s.FileForm)
+	server.POST("/file", s.FileUpload)
+	server.GET("/file/view/:id", s.FileView)
+	server.GET("/f/:id/:name", s.FileResolve)
 
 	s.Log.Info().Msgf("Started server on port %d", port)
 	server.Run(fmt.Sprintf(":%d", port))
