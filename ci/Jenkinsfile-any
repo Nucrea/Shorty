@@ -52,8 +52,7 @@ pipeline {
                     -d minio/minio:RELEASE.2025-02-28T09-55-16Z"
 
                 sh 'sleep 3'
-                sh "psql ${env.PSQL_URL} -f ./sql/db.sql"
-                sh "for file in ./sql/migrations/*.sql; do psql ${env.PSQL_URL} -f \$file; done"
+                sh "for file in ./sql/*.sql; do psql ${env.PSQL_URL} -f \$file; done"
             }
         }
         stage('Check running') {
