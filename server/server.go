@@ -58,7 +58,7 @@ func (s *server) Run(ctx context.Context, port uint16) {
 		ctx.Status(200)
 	})
 
-	server.StaticFS("/static", http.FS(staticDir))
+	StaticFS(server, "/static", http.FS(staticDir))
 
 	server.Use(middleware.Log(s.Log))
 	server.Use(tracing.NewMiddleware(s.Tracer))
