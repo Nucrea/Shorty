@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
+	"shorty/src/common"
 	"shorty/src/common/assets"
 	"shorty/src/common/broker"
 	"shorty/src/common/logger"
@@ -110,7 +111,7 @@ func (s *Service) UploadImage(ctx context.Context, name string, imageBytes []byt
 	}
 
 	metadata := ImageMetadataDTO{
-		Id:   NewShortId(32),
+		Id:   common.NewShortId(32),
 		Name: name,
 	}
 
@@ -121,8 +122,8 @@ func (s *Service) UploadImage(ctx context.Context, name string, imageBytes []byt
 	} else {
 		log.Info().Msg("not found existing files with same hash, saving img and thumb to storage...")
 
-		metadata.OriginalId = NewShortId(32)
-		metadata.ThumbnailId = NewShortId(32)
+		metadata.OriginalId = common.NewShortId(32)
+		metadata.ThumbnailId = common.NewShortId(32)
 
 		thumbBytes, err := s.createThumbnail(ctx, imageBytes)
 		if err != nil {

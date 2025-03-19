@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"shorty/src/common"
 	"shorty/src/common/logger"
 	"strings"
 
@@ -120,7 +121,7 @@ func (s *Service) Create(ctx context.Context, url string) (string, error) {
 		return "", ErrBadUrl
 	}
 
-	id := NewShortId(10)
+	id := common.NewShortId(10)
 	if err := s.storage.CreateLink(ctx, id, url); err != nil {
 		log.Error().Err(err).Msgf("creating qr and link with storage")
 		return "", ErrInternal

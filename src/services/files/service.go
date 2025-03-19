@@ -2,7 +2,10 @@ package files
 
 import (
 	"context"
+	"crypto/sha512"
+	"encoding/hex"
 	"errors"
+	"shorty/src/common"
 	"shorty/src/common/assets"
 	"shorty/src/common/broker"
 	"shorty/src/common/logger"
@@ -49,10 +52,13 @@ func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte)
 		return nil, ErrTooBig
 	}
 
+	hashBytes := sha512.Sum512(fileBytes)
+	hash := hex.EncodeToString(hashBytes[:])
+
 	asset := assets.AssetDTO{
-		Id:    NewShortId(32),
+		Id:    common.NewShortId(32),
 		Size:  len(fileBytes),
-		Hash:  "sdfsdsd",
+		Hash:  hash,
 		Bytes: fileBytes,
 	}
 
@@ -62,7 +68,7 @@ func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte)
 	}
 
 	metadata := &FileMetadataDTO{
-		Id:     NewShortId(32),
+		Id:     common.NewShortId(32),
 		FileId: asset.Id,
 		Name:   name,
 	}
