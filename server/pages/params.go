@@ -20,7 +20,7 @@ type LinkResultParams struct {
 	QRBase64  string
 }
 
-type ViewImageParams struct {
+type ImageViewParams struct {
 	FileName     string
 	SizeMB       float32
 	ViewUrl      string
@@ -28,11 +28,15 @@ type ViewImageParams struct {
 	ThumbnailUrl string
 }
 
-type ViewFileParams struct {
+type FileViewParams struct {
 	FileName        string
 	FileSizeMB      float32
 	FileViewUrl     string
 	FileDownloadUrl string
 	CaptchaId       string
 	CaptchaBase64   string
+}
+
+type FileDownloadParams struct {
+	FileRawUrl string
 }

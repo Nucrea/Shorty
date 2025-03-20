@@ -66,14 +66,20 @@ func (s *Site) LinkResult(c *gin.Context, url string, qrBase64 string) {
 	c.Status(200)
 }
 
-func (s *Site) ImageView(c *gin.Context, p ViewImageParams) {
+func (s *Site) ImageView(c *gin.Context, p ImageViewParams) {
 	s.template("views/image_view.html").Execute(c.Writer, p)
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }
 
-func (s *Site) FileView(c *gin.Context, p ViewFileParams) {
+func (s *Site) FileView(c *gin.Context, p FileViewParams) {
 	s.template("views/file_view.html").Execute(c.Writer, p)
+	c.Header("Content-Type", "text/html")
+	c.Status(200)
+}
+
+func (s *Site) FileDownload(c *gin.Context, fileRawUrl string) {
+	s.template("views/file_download.html").Execute(c.Writer, FileDownloadParams{FileRawUrl: fileRawUrl})
 	c.Header("Content-Type", "text/html")
 	c.Status(200)
 }

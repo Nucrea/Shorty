@@ -137,9 +137,13 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 	return nil
 }
 
-func (s *Service) CreateResourceToken(resource string, expiresAt int64) string {
-	value := fmt.Sprintf("%s%d%s", resource, expiresAt, tokenSecret)
-	return s.hashsum(value)
+func (s *Service) CreateResourceToken(resource string, ttl time.Duration) ExpiringToken {
+	expiresAt := time.Now().Add(ttl).UnixMicro()
+	raw := fmt.Sprintf("%s%d%s", resource, expiresAt, tokenSecret)
+	return ExpiringToken{
+		Value:   s.hashsum(raw),
+		Exipres: expiresAt,
+	}
 }
 
 func (s *Service) CheckResourceToken(resource string, expiresAt int64, token string) bool {

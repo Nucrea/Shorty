@@ -29,11 +29,10 @@ func (s *server) ImageView(c *gin.Context) {
 	viewUrl := fmt.Sprintf("%s/image/view/%s", s.Url, meta.Id)
 	thumbUrl := fmt.Sprintf("%s/i/t/%s", s.Url, meta.Id)
 
-	expiresAt := time.Now().Add(time.Hour).UnixMicro()
-	token := s.GuardService.CreateResourceToken(meta.Id, expiresAt)
-	imgUrl := fmt.Sprintf("%s/i/o/%s?token=%s&expires=%d", s.Url, meta.Id, token, expiresAt)
+	token := s.GuardService.CreateResourceToken(meta.Id, time.Hour)
+	imgUrl := fmt.Sprintf("%s/i/o/%s?token=%s&expires=%d", s.Url, meta.Id, token.Value, token.Exipres)
 
-	s.pages.ImageView(c, pages.ViewImageParams{
+	s.pages.ImageView(c, pages.ImageViewParams{
 		FileName:     meta.Name,
 		SizeMB:       float32(meta.Size) / (1024 * 1024),
 		ViewUrl:      viewUrl,

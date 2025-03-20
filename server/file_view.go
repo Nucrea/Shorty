@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"shorty/server/pages"
 	"shorty/src/services/files"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,13 +27,10 @@ func (s *server) FileView(c *gin.Context) {
 
 	captcha, _ := s.GuardService.CreateCaptcha(c)
 
-	expiresAt := time.Now().Add(10 * time.Second).UnixMicro()
-	token := s.GuardService.CreateResourceToken(meta.Id, expiresAt)
-
-	downloadUrl := fmt.Sprintf("%s/f/%s/%s?token=%s&expires=%d", s.Url, meta.Id, meta.Name, token, expiresAt)
+	downloadUrl := fmt.Sprintf("%s/file/download/%s", s.Url, meta.Id)
 	viewUrl := fmt.Sprintf("%s/file/view/%s", s.Url, meta.Id)
 
-	s.pages.FileView(c, pages.ViewFileParams{
+	s.pages.FileView(c, pages.FileViewParams{
 		FileName:        meta.Name,
 		FileSizeMB:      float32(meta.Size) / (1024 * 1024),
 		FileViewUrl:     viewUrl,

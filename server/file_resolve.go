@@ -18,13 +18,6 @@ func (s *server) FileResolve(c *gin.Context) {
 		return
 	}
 
-	captchaId, captchaToken := c.Query("id"), c.Query("token")
-	err := s.GuardService.CheckCaptcha(c, captchaId, captchaToken)
-	if err != nil {
-		c.Redirect(302, fmt.Sprintf("/file/view/%s?err=%s", id, url.QueryEscape("captcha wrong or expired")))
-		return
-	}
-
 	token, expiresStr := c.Query("token"), c.Query("expires")
 	expires, _ := strconv.Atoi(expiresStr)
 
@@ -33,7 +26,7 @@ func (s *server) FileResolve(c *gin.Context) {
 
 	if expired || !valid {
 		s.Log.WithContext(c).Info().Msgf("file (id=%s) token(%s) expired, redirecting to view", id, common.MaskSecret(token))
-		viewUrl := fmt.Sprintf("%s/file/view/%s", s.Url, id)
+		viewUrl := fmt.Sprintf("%s/file/view/%s?err=%s", s.Url, id, url.QueryEscape("Download link expired"))
 		c.Redirect(302, viewUrl)
 		return
 	}

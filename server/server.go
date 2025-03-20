@@ -81,6 +81,7 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.GET("/file", s.FileForm)
 	server.POST("/file", s.FileUpload)
 	server.GET("/file/view/:id", s.FileView)
+	server.GET("/file/download/:id", s.FileDownload)
 	server.GET("/f/:id/:name", s.FileResolve)
 
 	s.Log.Info().Msgf("Started server on port %d", port)
