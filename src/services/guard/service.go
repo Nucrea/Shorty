@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"shorty/src/common"
 	"shorty/src/common/cache"
 	"shorty/src/common/logger"
@@ -22,7 +23,8 @@ var (
 	ErrWrongCaptcha  = errors.New("wrong captcha")
 	ErrNoSuchCaptcha = errors.New("no such captcha")
 
-	CaptchaSecret = common.NewShortId(10)
+	captchaSecret = common.NewShortId(10)
+	tokenSecret   = common.NewShortId(10)
 )
 
 const (
@@ -31,6 +33,8 @@ const (
 
 	BanWindow = 1 * time.Hour
 	BanAmount = 2 * LimitAmount
+
+	CaptchaTTL = 2 * time.Minute
 )
 
 func NewService(rdb *redis.Client, log logger.Logger, tracer trace.Tracer) *Service {
@@ -87,8 +91,8 @@ func (s *Service) CheckIP(ctx context.Context, ip string) error {
 	return nil
 }
 
-func (s *Service) hashCaptcha(value string) string {
-	hashBytes := sha1.Sum([]byte(value + CaptchaSecret))
+func (s *Service) hashsum(value string) string {
+	hashBytes := sha1.Sum([]byte(value + captchaSecret))
 	return hex.EncodeToString(hashBytes[:])
 }
 
@@ -101,8 +105,8 @@ func (s *Service) CreateCaptcha(ctx context.Context) (*CaptchaDTO, error) {
 	id := common.NewShortId(16)
 	value := common.NewDigitsString(4)
 
-	hash := s.hashCaptcha(value)
-	s.captchaCache.SetEx(id, hash, time.Minute)
+	hash := s.hashsum(value + captchaSecret)
+	s.captchaCache.SetEx(id, hash, CaptchaTTL)
 
 	imageBase64 := common.NewCaptchaImageBase64(id, value)
 
@@ -123,7 +127,7 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 		return ErrNoSuchCaptcha
 	}
 
-	if s.hashCaptcha(value) != storedHash {
+	if s.hashsum(value+captchaSecret) != storedHash {
 		log.Info().Msgf("wrong captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
 		return ErrWrongCaptcha
 	}
@@ -132,4 +136,14 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 
 	s.captchaCache.Del(id)
 	return nil
+}
+
+func (s *Service) CreateResourceToken(resource string, expiresAt int64) string {
+	value := fmt.Sprintf("%s%d%s", resource, expiresAt, tokenSecret)
+	return s.hashsum(value)
+}
+
+func (s *Service) CheckResourceToken(resource string, expiresAt int64, token string) bool {
+	value := fmt.Sprintf("%s%d%s", resource, expiresAt, tokenSecret)
+	return s.hashsum(value) == token
 }

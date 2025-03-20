@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"shorty/server/pages"
 	"shorty/src/services/image"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +28,10 @@ func (s *server) ImageView(c *gin.Context) {
 
 	viewUrl := fmt.Sprintf("%s/image/view/%s", s.Url, meta.Id)
 	thumbUrl := fmt.Sprintf("%s/i/t/%s", s.Url, meta.Id)
-	imgUrl := fmt.Sprintf("%s/i/o/%s", s.Url, meta.Id)
+
+	expiresAt := time.Now().Add(time.Hour).UnixMicro()
+	token := s.GuardService.CreateResourceToken(meta.Id, expiresAt)
+	imgUrl := fmt.Sprintf("%s/i/o/%s?token=%s&expires=%d", s.Url, meta.Id, token, expiresAt)
 
 	s.pages.ImageView(c, pages.ViewImageParams{
 		FileName:     meta.Name,
