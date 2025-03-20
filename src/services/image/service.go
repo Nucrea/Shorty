@@ -27,6 +27,7 @@ var (
 )
 
 const (
+	BucketName   = "images"
 	MaxImageSize = 5 * 1024 * 1024
 )
 
@@ -34,7 +35,7 @@ func NewService(pg *pgxpool.Pool, s3 *minio.Client, log logger.Logger, tracer tr
 	return &Service{
 		log:          log.WithService("image"),
 		tracer:       tracer,
-		assetStorage: assets.NewStorage(pg, s3, tracer, log, "images"),
+		assetStorage: assets.NewStorage(pg, s3, tracer, log),
 		metaRepo:     newMetadataRepo(pg, tracer),
 	}
 }
@@ -120,7 +121,7 @@ func (s *Service) UploadImage(ctx context.Context, name string, imageBytes []byt
 			return nil, err
 		}
 
-		assets, err := s.assetStorage.SaveAssets(ctx, imageBytes, thumbBytes)
+		assets, err := s.assetStorage.SaveAssets(ctx, BucketName, imageBytes, thumbBytes)
 		if err != nil {
 			log.Error().Err(err).Msg("failed saving assets")
 			return nil, ErrInternal
@@ -178,7 +179,7 @@ func (s *Service) GetImageBytes(ctx context.Context, id string, thumbnail bool) 
 		assetId = meta.ThumbnailId
 	}
 
-	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, assetId)
+	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, BucketName, assetId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed getting image asset bytes from storage (id=%s, assetId=%s, thumbnail=%t)", id, assetId, thumbnail)
 		return nil, ErrInternal

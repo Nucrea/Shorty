@@ -20,14 +20,15 @@ var (
 )
 
 const (
-	MaxSize = 20 * 1024 * 1024
+	BucketName = "files"
+	MaxSize    = 20 * 1024 * 1024
 )
 
 func NewService(pg *pgxpool.Pool, mc *minio.Client, log logger.Logger, tracer trace.Tracer) *Service {
 	return &Service{
 		log:          log.WithService("files"),
 		tracer:       tracer,
-		assetStorage: assets.NewStorage(pg, mc, tracer, log, "files"),
+		assetStorage: assets.NewStorage(pg, mc, tracer, log),
 		infoStorage:  newMetadataRepo(pg, tracer),
 	}
 }
@@ -50,7 +51,7 @@ func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte)
 		return nil, ErrTooBig
 	}
 
-	result, err := s.assetStorage.SaveAssets(ctx, fileBytes)
+	result, err := s.assetStorage.SaveAssets(ctx, BucketName, fileBytes)
 	if err != nil {
 		log.Error().Err(err).Msg("err saving file asset")
 		return nil, ErrInternal
@@ -65,6 +66,8 @@ func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte)
 		log.Error().Err(err).Msg("err saving file info")
 		return nil, ErrInternal
 	}
+
+	log.Info().Msgf("saved file with id=%s", metadata.Id)
 
 	return metadata, nil
 }
@@ -85,6 +88,8 @@ func (s *Service) GetFileMetadata(ctx context.Context, id string) (*FileMetadata
 		return nil, ErrNotFound
 	}
 
+	log.Info().Msgf("read file metadata, id=%s", meta.Id)
+
 	return meta, nil
 }
 
@@ -99,11 +104,13 @@ func (s *Service) GetFileBytes(ctx context.Context, id string) ([]byte, error) {
 		return nil, err
 	}
 
-	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, meta.FileId)
+	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, BucketName, meta.FileId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed getting file (id=%s, file_id=%s) from storage", id, meta.FileId)
 		return nil, ErrInternal
 	}
+
+	log.Info().Msgf("read file bytes, id=%s", meta.Id)
 
 	return assetBytes, nil
 }

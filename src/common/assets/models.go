@@ -1,16 +1,18 @@
 package assets
 
 type AssetMetadataDTO struct {
-	Id   string
-	Size int
-	Hash string
+	Id     string
+	Size   int
+	Hash   string
+	Bucket string
 }
 
 type AssetDTO struct {
-	Id    string
-	Size  int
-	Hash  string
-	Bytes []byte
+	Id     string
+	Size   int
+	Hash   string
+	Bucket string
+	Bytes  []byte
 }
 
 type AssetStatus string
