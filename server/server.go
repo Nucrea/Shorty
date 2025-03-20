@@ -60,13 +60,13 @@ func (s *server) Run(ctx context.Context, port uint16) {
 
 	StaticFS(server, "/static", http.FS(staticDir))
 
-	server.Use(middleware.Log(s.Log))
-	server.Use(tracing.NewMiddleware(s.Tracer))
-	server.Use(middleware.Ratelimit(s.GuardService, s.pages))
-
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(302, "/link")
 	})
+
+	server.Use(middleware.Log(s.Log))
+	server.Use(tracing.NewMiddleware(s.Tracer))
+	server.Use(middleware.Ratelimit(s.GuardService, s.pages))
 
 	server.GET("/link", s.pages.LinkForm)
 	server.POST("/link", s.LinkResult)
