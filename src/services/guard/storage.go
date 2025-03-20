@@ -55,5 +55,29 @@ func (s *storage) SetBanned(ctx context.Context, ip string, banDuration time.Dur
 	defer span.End()
 
 	key := fmt.Sprintf("banned:%s", ip)
-	return s.rdb.Set(ctx, key, true, banDuration).Err()
+	return s.rdb.SetEx(ctx, key, true, banDuration).Err()
+}
+
+func (s *storage) SetCaptchaHash(ctx context.Context, id, hash string, ttl time.Duration) error {
+	ctx, span := s.tracer.Start(ctx, "redis::SetCaptchaHash")
+	defer span.End()
+
+	key := fmt.Sprintf("captcha:%s", id)
+	return s.rdb.SetEx(ctx, key, hash, ttl).Err()
+}
+
+func (s *storage) PopCaptchaHash(ctx context.Context, id string) (string, error) {
+	ctx, span := s.tracer.Start(ctx, "redis::PopCaptchaHash")
+	defer span.End()
+
+	key := fmt.Sprintf("captcha:%s", id)
+	hash, err := s.rdb.GetDel(ctx, key).Result()
+	if err == redis.Nil {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+
+	return hash, nil
 }

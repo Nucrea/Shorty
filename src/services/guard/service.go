@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"shorty/src/common"
-	"shorty/src/common/cache"
 	"shorty/src/common/logger"
 	"time"
 
@@ -39,18 +38,16 @@ const (
 
 func NewService(rdb *redis.Client, log logger.Logger, tracer trace.Tracer) *Service {
 	return &Service{
-		log:          log.WithService("guard"),
-		tracer:       tracer,
-		storage:      newStorage(rdb, tracer),
-		captchaCache: cache.NewInmem[string](),
+		log:     log.WithService("guard"),
+		tracer:  tracer,
+		storage: newStorage(rdb, tracer),
 	}
 }
 
 type Service struct {
-	log          logger.Logger
-	tracer       trace.Tracer
-	storage      *storage
-	captchaCache *cache.Inmem[string]
+	log     logger.Logger
+	tracer  trace.Tracer
+	storage *storage
 }
 
 func (s *Service) CheckIP(ctx context.Context, ip string) error {
@@ -106,7 +103,7 @@ func (s *Service) CreateCaptcha(ctx context.Context) (*CaptchaDTO, error) {
 	value := common.NewDigitsString(4)
 
 	hash := s.hashsum(value + captchaSecret)
-	s.captchaCache.SetEx(id, hash, CaptchaTTL)
+	s.storage.SetCaptchaHash(ctx, id, hash, CaptchaTTL)
 
 	imageBase64 := common.NewCaptchaImageBase64(id, value)
 
@@ -121,8 +118,12 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 	ctx, span := s.tracer.Start(ctx, "guard::CheckCaptcha")
 	defer span.End()
 
-	storedHash, ok := s.captchaCache.Get(id)
-	if !ok {
+	storedHash, err := s.storage.PopCaptchaHash(ctx, id)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed getting captcha hash id=%s", id)
+		return ErrInternal
+	}
+	if storedHash == "" {
 		log.Info().Msgf("no such captcha with id=%s", common.MaskSecret(id), common.MaskSecret(value))
 		return ErrNoSuchCaptcha
 	}
@@ -133,8 +134,6 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 	}
 
 	log.Info().Msgf("approved captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
-
-	s.captchaCache.Del(id)
 	return nil
 }
 
