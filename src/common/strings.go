@@ -1,6 +1,8 @@
 package common
 
 import (
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"regexp"
@@ -27,6 +29,11 @@ func NewShortId(size int) string {
 	}
 
 	return sb.String()
+}
+
+func NewAssetHash(asset []byte) string {
+	hash := sha512.Sum512(asset)
+	return hex.EncodeToString(hash[:])
 }
 
 func ValidateShortId(value string) bool {

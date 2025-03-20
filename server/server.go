@@ -33,6 +33,7 @@ type Opts struct {
 }
 
 func New(opts Opts) *server {
+	opts.Log = opts.Log.WithService("server")
 	return &server{opts, &pages.Site{}}
 }
 

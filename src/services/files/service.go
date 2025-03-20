@@ -2,8 +2,6 @@ package files
 
 import (
 	"context"
-	"crypto/sha512"
-	"encoding/hex"
 	"errors"
 	"shorty/src/common"
 	"shorty/src/common/assets"
@@ -29,7 +27,7 @@ func NewService(pg *pgxpool.Pool, mc *minio.Client, log logger.Logger, tracer tr
 	return &Service{
 		log:          log.WithService("files"),
 		tracer:       tracer,
-		assetStorage: assets.NewStorage(pg, mc, tracer, "files"),
+		assetStorage: assets.NewStorage(pg, mc, tracer, log, "files"),
 		infoStorage:  newMetadataRepo(pg, tracer),
 	}
 }
@@ -52,24 +50,15 @@ func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte)
 		return nil, ErrTooBig
 	}
 
-	hashBytes := sha512.Sum512(fileBytes)
-	hash := hex.EncodeToString(hashBytes[:])
-
-	asset := assets.AssetDTO{
-		Id:    common.NewShortId(32),
-		Size:  len(fileBytes),
-		Hash:  hash,
-		Bytes: fileBytes,
-	}
-
-	if _, err := s.assetStorage.SaveAssets(ctx, asset); err != nil {
+	result, err := s.assetStorage.SaveAssets(ctx, fileBytes)
+	if err != nil {
 		log.Error().Err(err).Msg("err saving file asset")
 		return nil, ErrInternal
 	}
 
 	metadata := &FileMetadataDTO{
 		Id:     common.NewShortId(32),
-		FileId: asset.Id,
+		FileId: result[0].Id,
 		Name:   name,
 	}
 	if err := s.infoStorage.SaveFileMetadata(ctx, *metadata); err != nil {

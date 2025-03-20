@@ -32,6 +32,7 @@ func (s *server) ImageResolve(c *gin.Context) {
 	}
 
 	if oldEtag := c.GetHeader("If-None-Match"); oldEtag == meta.Hash {
+		s.Log.WithContext(c).Info().Msgf("image (id=%s) hash does not changed", id)
 		c.AbortWithStatus(http.StatusNotModified)
 		return
 	}
