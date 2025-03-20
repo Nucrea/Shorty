@@ -33,6 +33,7 @@ type Opts struct {
 }
 
 func New(opts Opts) *server {
+	opts.Log = opts.Log.WithService("server")
 	return &server{opts, &pages.Site{}}
 }
 
@@ -60,13 +61,13 @@ func (s *server) Run(ctx context.Context, port uint16) {
 
 	StaticFS(server, "/static", http.FS(staticDir))
 
-	server.Use(middleware.Log(s.Log))
-	server.Use(tracing.NewMiddleware(s.Tracer))
-	server.Use(middleware.Ratelimit(s.GuardService, s.pages))
-
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(302, "/link")
 	})
+
+	server.Use(middleware.Log(s.Log))
+	server.Use(tracing.NewMiddleware(s.Tracer))
+	server.Use(middleware.Ratelimit(s.GuardService, s.pages))
 
 	server.GET("/link", s.pages.LinkForm)
 	server.POST("/link", s.LinkResult)
@@ -80,6 +81,7 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.GET("/file", s.FileForm)
 	server.POST("/file", s.FileUpload)
 	server.GET("/file/view/:id", s.FileView)
+	server.GET("/file/download/:id", s.FileDownload)
 	server.GET("/f/:id/:name", s.FileResolve)
 
 	s.Log.Info().Msgf("Started server on port %d", port)

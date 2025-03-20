@@ -1,20 +1,12 @@
 package links
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
 	"errors"
-	"fmt"
-	"regexp"
 	"shorty/src/common"
 	"shorty/src/common/logger"
-	"strings"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/yeqown/go-qrcode/v2"
-	"github.com/yeqown/go-qrcode/writer/standard"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -26,20 +18,17 @@ var (
 )
 
 func NewService(pgConn *pgxpool.Pool, log logger.Logger, appUrl string, tracer trace.Tracer) *Service {
-	shortIdRegexp := regexp.MustCompile(`^\w{10}$`)
 	return &Service{
-		log:      log.WithService("links"),
-		tracer:   tracer,
-		idRegexp: shortIdRegexp,
-		storage:  NewStorage(pgConn, tracer),
+		log:     log.WithService("links"),
+		tracer:  tracer,
+		storage: NewStorage(pgConn, tracer),
 	}
 }
 
 type Service struct {
-	log      logger.Logger
-	tracer   trace.Tracer
-	idRegexp *regexp.Regexp
-	storage  *storage
+	log     logger.Logger
+	tracer  trace.Tracer
+	storage *storage
 }
 
 func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, error) {
@@ -48,7 +37,7 @@ func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, erro
 	ctx, span := s.tracer.Start(ctx, "links::GetByShortId")
 	defer span.End()
 
-	if !s.idRegexp.MatchString(linkId) {
+	if !common.ValidateShortId(linkId) {
 		return "", ErrBadShortId
 	}
 
@@ -67,56 +56,14 @@ func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, erro
 	return link, nil
 }
 
-func (s *Service) parseUrl(url string) (string, error) {
-	if len(url) > 2000 {
-		return "", ErrBadUrl
-	}
-
-	url = strings.TrimSpace(url)
-	if !govalidator.IsURL(url) {
-		return "", ErrBadUrl
-	}
-
-	if !strings.HasSuffix(url, "http") || !strings.HasSuffix(url, "https") {
-		url = fmt.Sprintf("https://%s", url)
-	}
-
-	return url, nil
-}
-
-func (s *Service) MakeQR(ctx context.Context, url string) (string, error) {
-	log := s.log.WithContext(ctx)
-
-	ctx, span := s.tracer.Start(ctx, "links::MakeQR")
-	defer span.End()
-
-	qrc, err := qrcode.New(url)
-	if err != nil {
-		log.Error().Msgf("creating QR Code for link=%s", url)
-		return "", ErrInternal
-	}
-
-	buf := bytes.NewBuffer(nil)
-	wc := BytesWriterCloser{buf}
-
-	wr := standard.NewWithWriter(wc, standard.WithQRWidth(20))
-	if err := qrc.Save(wr); err != nil {
-		log.Error().Msgf("saving QR Code for link=%s", url)
-		return "", ErrInternal
-	}
-
-	qrBase64 := base64.StdEncoding.EncodeToString(buf.Bytes())
-	return qrBase64, err
-}
-
 func (s *Service) Create(ctx context.Context, url string) (string, error) {
 	log := s.log.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "links::CreateShortlink")
 	defer span.End()
 
-	url, err := s.parseUrl(url)
-	if err != nil {
+	url = common.ValidateUrl(url)
+	if url == "" {
 		log.Info().Msgf("invalid input url %s", url)
 		return "", ErrBadUrl
 	}

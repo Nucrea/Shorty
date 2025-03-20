@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/url"
+	"shorty/src/common"
 	"shorty/src/services/links"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +31,7 @@ func (s *server) LinkResult(c *gin.Context) {
 	}
 
 	resultUrl := fmt.Sprintf("%s/l/%s", s.Url, id)
-	qrBase64, err := s.LinksService.MakeQR(c, resultUrl)
+	qrBase64, err := common.NewQRBase64(resultUrl)
 	if err != nil {
 		log.Error().Err(err).Msg("error creating qr")
 		s.pages.InternalError(c)

@@ -27,12 +27,12 @@ func (m *metadataRepo) SaveAssetsMetadata(ctx context.Context, metas ...AssetMet
 
 	rows := [][]interface{}{}
 	for _, meta := range metas {
-		rows = append(rows, []interface{}{meta.Id, meta.Size, meta.Hash})
+		rows = append(rows, []interface{}{meta.Id, meta.Size, meta.Hash, meta.Bucket})
 	}
 
 	copyCount, err := m.db.CopyFrom(ctx,
 		pgx.Identifier{"assets"},
-		[]string{"id", "size", "hash"},
+		[]string{"id", "size", "hash", "bucket"},
 		pgx.CopyFromRows(rows),
 	)
 	if err != nil {

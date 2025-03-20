@@ -25,12 +25,12 @@ func (s *server) FileView(c *gin.Context) {
 		return
 	}
 
-	captcha, _ := s.GuardService.CreateCaptcha()
+	captcha, _ := s.GuardService.CreateCaptcha(c)
 
+	downloadUrl := fmt.Sprintf("%s/file/download/%s", s.Url, meta.Id)
 	viewUrl := fmt.Sprintf("%s/file/view/%s", s.Url, meta.Id)
-	downloadUrl := fmt.Sprintf("%s/f/%s/%s", s.Url, meta.Id, meta.Name)
 
-	s.pages.FileView(c, pages.ViewFileParams{
+	s.pages.FileView(c, pages.FileViewParams{
 		FileName:        meta.Name,
 		FileSizeMB:      float32(meta.Size) / (1024 * 1024),
 		FileViewUrl:     viewUrl,

@@ -42,7 +42,7 @@ func Log(log logger.Logger) gin.HandlerFunc {
 			Str("path", path).
 			Str("ip", c.ClientIP()).
 			Int("status", statusCode).
-			Dur("duration", duration).
+			Str("duration", duration.Round(time.Microsecond).String()).
 			Send()
 	}
 }

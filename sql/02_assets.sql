@@ -4,7 +4,7 @@ create table if not exists assets (
     id char(32) primary key,
     size integer not null,
     hash char(128) not null,
-    -- extension varchar(16) not null,
+    bucket varchar(256) not null,
     status assets_status not null default 'pending',
     -- report_count integer not null default 0,
     created_at timestamp not null default now(),

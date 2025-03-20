@@ -3,8 +3,6 @@ package image
 import (
 	"bytes"
 	"context"
-	"crypto/sha512"
-	"encoding/hex"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -29,6 +27,7 @@ var (
 )
 
 const (
+	BucketName   = "images"
 	MaxImageSize = 5 * 1024 * 1024
 )
 
@@ -36,7 +35,7 @@ func NewService(pg *pgxpool.Pool, s3 *minio.Client, log logger.Logger, tracer tr
 	return &Service{
 		log:          log.WithService("image"),
 		tracer:       tracer,
-		assetStorage: assets.NewStorage(pg, s3, tracer, "images"),
+		assetStorage: assets.NewStorage(pg, s3, tracer, log),
 		metaRepo:     newMetadataRepo(pg, tracer),
 	}
 }
@@ -86,11 +85,6 @@ func (s *Service) createThumbnail(ctx context.Context, imgBytes []byte) ([]byte,
 	return buff.Bytes(), nil
 }
 
-func (s *Service) getHash(imgBytes []byte) string {
-	hash := sha512.Sum512(imgBytes)
-	return hex.EncodeToString(hash[:])
-}
-
 func (s *Service) UploadImage(ctx context.Context, name string, imageBytes []byte) (*ImageMetadataDTO, error) {
 	log := s.log.WithContext(ctx).WithService("image")
 
@@ -103,7 +97,7 @@ func (s *Service) UploadImage(ctx context.Context, name string, imageBytes []byt
 		return nil, ErrImageTooLarge
 	}
 
-	imageHash := s.getHash(imageBytes)
+	imageHash := common.NewAssetHash(imageBytes)
 	info, err := s.metaRepo.GetImageMetadataDuplicate(ctx, imageSize, imageHash)
 	if err != nil {
 		log.Error().Err(err).Msg("failed getting img info by hash")
@@ -122,31 +116,19 @@ func (s *Service) UploadImage(ctx context.Context, name string, imageBytes []byt
 	} else {
 		log.Info().Msg("not found existing files with same hash, saving img and thumb to storage...")
 
-		metadata.OriginalId = common.NewShortId(32)
-		metadata.ThumbnailId = common.NewShortId(32)
-
 		thumbBytes, err := s.createThumbnail(ctx, imageBytes)
 		if err != nil {
 			return nil, err
 		}
 
-		originalDto := assets.AssetDTO{
-			Id:    metadata.OriginalId,
-			Size:  imageSize,
-			Hash:  imageHash,
-			Bytes: imageBytes,
-		}
-		thumbDto := assets.AssetDTO{
-			Id:    metadata.ThumbnailId,
-			Size:  len(thumbBytes),
-			Hash:  s.getHash(thumbBytes),
-			Bytes: thumbBytes,
-		}
-
-		if _, err := s.assetStorage.SaveAssets(ctx, originalDto, thumbDto); err != nil {
+		assets, err := s.assetStorage.SaveAssets(ctx, BucketName, imageBytes, thumbBytes)
+		if err != nil {
 			log.Error().Err(err).Msg("failed saving assets")
 			return nil, ErrInternal
 		}
+
+		metadata.OriginalId = assets[0].Id
+		metadata.ThumbnailId = assets[1].Id
 	}
 
 	err = s.metaRepo.SaveImageMetadata(ctx, metadata)
@@ -176,6 +158,8 @@ func (s *Service) GetImageMetadata(ctx context.Context, id string) (*ImageMetada
 		return nil, ErrImageNotFound
 	}
 
+	log.Info().Msgf("read image metadata (id=%s)", id)
+
 	return meta, nil
 }
 
@@ -195,11 +179,13 @@ func (s *Service) GetImageBytes(ctx context.Context, id string, thumbnail bool) 
 		assetId = meta.ThumbnailId
 	}
 
-	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, assetId)
+	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, BucketName, assetId)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed getting image (id=%s, assetId=%s, thumbnail=%t) bytes from storage", id, assetId, thumbnail)
+		log.Error().Err(err).Msgf("failed getting image asset bytes from storage (id=%s, assetId=%s, thumbnail=%t)", id, assetId, thumbnail)
 		return nil, ErrInternal
 	}
+
+	log.Info().Msgf("read image asset (id=%s, assetId=%s, thumbnail=%t)", id, assetId, thumbnail)
 
 	return assetBytes, nil
 }

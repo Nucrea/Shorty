@@ -3,7 +3,10 @@ package server
 import (
 	"fmt"
 	"net/url"
+	"shorty/src/common"
 	"shorty/src/services/files"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,10 +18,16 @@ func (s *server) FileResolve(c *gin.Context) {
 		return
 	}
 
-	captchaId, captchaToken := c.Query("id"), c.Query("token")
-	err := s.GuardService.CheckCaptcha(captchaId, captchaToken)
-	if err != nil {
-		c.Redirect(302, fmt.Sprintf("/file/view/%s?err=%s", id, url.QueryEscape("captcha wrong or expired")))
+	token, expiresStr := c.Query("token"), c.Query("expires")
+	expires, _ := strconv.Atoi(expiresStr)
+
+	expired := int(time.Now().UnixMicro()) > expires
+	valid := s.GuardService.CheckResourceToken(id, int64(expires), token)
+
+	if expired || !valid {
+		s.Log.WithContext(c).Info().Msgf("file (id=%s) token(%s) expired, redirecting to view", id, common.MaskSecret(token))
+		viewUrl := fmt.Sprintf("%s/file/view/%s?err=%s", s.Url, id, url.QueryEscape("Download link expired"))
+		c.Redirect(302, viewUrl)
 		return
 	}
 
