@@ -21,7 +21,9 @@ var (
 	ErrTemporaryBanned = errors.New("temporary banned")
 	ErrTooManyRequests = errors.New("too many requests")
 	ErrInternal        = errors.New("internal error")
-	ErrWrongCaptcha    = errors.New("wrong captcha")
+
+	ErrWrongCaptcha  = errors.New("wrong captcha")
+	ErrNoSuchCaptcha = errors.New("no such captcha")
 
 	CaptchaSecret = common.NewShortId(10)
 )
@@ -36,7 +38,7 @@ const (
 
 func NewService(rdb *redis.Client, log logger.Logger, tracer trace.Tracer) *Service {
 	return &Service{
-		log:          log.WithService("ratelimit"),
+		log:          log.WithService("guard"),
 		tracer:       tracer,
 		storage:      newStorage(rdb, tracer),
 		captchaCache: cache.NewInmem[string](),
@@ -51,9 +53,9 @@ type Service struct {
 }
 
 func (s *Service) CheckIP(ctx context.Context, ip string) error {
-	log := s.log.WithContext(ctx)
+	log := s.log.WithContext(ctx).WithService("guard")
 
-	ctx, span := s.tracer.Start(ctx, "ratelimit::Check")
+	ctx, span := s.tracer.Start(ctx, "guard::CheckIP")
 	defer span.End()
 
 	banned, err := s.storage.IsBanned(ctx, ip)
@@ -88,7 +90,12 @@ func (s *Service) CheckIP(ctx context.Context, ip string) error {
 	return nil
 }
 
-func (s *Service) CreateCaptcha() (*CaptchaDTO, error) {
+func (s *Service) CreateCaptcha(ctx context.Context) (*CaptchaDTO, error) {
+	log := s.log.WithContext(ctx).WithService("guard")
+
+	ctx, span := s.tracer.Start(ctx, "guard::CreateCaptcha")
+	defer span.End()
+
 	id := common.NewShortId(16)
 	value := common.NewDigitsString(4)
 
@@ -105,24 +112,35 @@ func (s *Service) CreateCaptcha() (*CaptchaDTO, error) {
 	hash := hex.EncodeToString(hashBytes[:])
 	s.captchaCache.SetEx(id, hash, time.Minute)
 
+	log.Info().Msgf("created captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
+
 	return &CaptchaDTO{
 		Id:          id,
 		ImageBase64: base64.StdEncoding.EncodeToString(buf.Bytes()),
 	}, nil
 }
 
-func (s *Service) CheckCaptcha(id, captcha string) error {
+func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
+	log := s.log.WithContext(ctx).WithService("guard")
+
+	ctx, span := s.tracer.Start(ctx, "guard::CheckCaptcha")
+	defer span.End()
+
 	storedHash, ok := s.captchaCache.Get(id)
 	if !ok {
-		return ErrWrongCaptcha
+		log.Info().Msgf("no such captcha with id=%s", common.MaskSecret(id), common.MaskSecret(value))
+		return ErrNoSuchCaptcha
 	}
 
-	hashBytes := sha1.Sum([]byte(captcha + CaptchaSecret))
+	hashBytes := sha1.Sum([]byte(value + CaptchaSecret))
 	hash := hex.EncodeToString(hashBytes[:])
 
 	if hash != storedHash {
+		log.Info().Msgf("wrong captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
 		return ErrWrongCaptcha
 	}
+
+	log.Info().Msgf("approved captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
 
 	s.captchaCache.Del(id)
 	return nil

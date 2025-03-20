@@ -25,7 +25,7 @@ func (s *server) FileView(c *gin.Context) {
 		return
 	}
 
-	captcha, _ := s.GuardService.CreateCaptcha()
+	captcha, _ := s.GuardService.CreateCaptcha(c)
 
 	viewUrl := fmt.Sprintf("%s/file/view/%s", s.Url, meta.Id)
 	downloadUrl := fmt.Sprintf("%s/f/%s/%s", s.Url, meta.Id, meta.Name)

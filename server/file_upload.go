@@ -11,7 +11,7 @@ import (
 
 func (s *server) FileUpload(c *gin.Context) {
 	id, token := c.PostForm("id"), c.PostForm("token")
-	err := s.GuardService.CheckCaptcha(id, token)
+	err := s.GuardService.CheckCaptcha(c, id, token)
 	if err != nil {
 		c.Redirect(302, "/file?err="+url.QueryEscape("captcha wrong or expired"))
 		return

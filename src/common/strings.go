@@ -37,3 +37,15 @@ func NewDigitsString(size int) string {
 
 	return sb.String()
 }
+
+func MaskSecret(secret string) string {
+	hLen := len(secret) / 2
+
+	sb := strings.Builder{}
+	sb.WriteString(secret[0:hLen])
+	for range hLen {
+		sb.WriteRune('*')
+	}
+
+	return sb.String()
+}

@@ -16,7 +16,7 @@ func (s *server) FileResolve(c *gin.Context) {
 	}
 
 	captchaId, captchaToken := c.Query("id"), c.Query("token")
-	err := s.GuardService.CheckCaptcha(captchaId, captchaToken)
+	err := s.GuardService.CheckCaptcha(c, captchaId, captchaToken)
 	if err != nil {
 		c.Redirect(302, fmt.Sprintf("/file/view/%s?err=%s", id, url.QueryEscape("captcha wrong or expired")))
 		return
