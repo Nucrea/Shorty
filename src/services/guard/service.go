@@ -1,10 +1,8 @@
 package guard
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha1"
-	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"shorty/src/common"
@@ -12,7 +10,6 @@ import (
 	"shorty/src/common/logger"
 	"time"
 
-	"github.com/dchest/captcha"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -90,6 +87,11 @@ func (s *Service) CheckIP(ctx context.Context, ip string) error {
 	return nil
 }
 
+func (s *Service) hashCaptcha(value string) string {
+	hashBytes := sha1.Sum([]byte(value + CaptchaSecret))
+	return hex.EncodeToString(hashBytes[:])
+}
+
 func (s *Service) CreateCaptcha(ctx context.Context) (*CaptchaDTO, error) {
 	log := s.log.WithContext(ctx).WithService("guard")
 
@@ -99,25 +101,14 @@ func (s *Service) CreateCaptcha(ctx context.Context) (*CaptchaDTO, error) {
 	id := common.NewShortId(16)
 	value := common.NewDigitsString(4)
 
-	digits := make([]byte, 4)
-	for i, c := range value {
-		digits[i] = byte(c - '0')
-	}
-
-	buf := bytes.NewBuffer(nil)
-	image := captcha.NewImage(id, digits, 200, 80)
-	image.WriteTo(buf)
-
-	hashBytes := sha1.Sum([]byte(value + CaptchaSecret))
-	hash := hex.EncodeToString(hashBytes[:])
+	hash := s.hashCaptcha(value)
 	s.captchaCache.SetEx(id, hash, time.Minute)
+
+	imageBase64 := common.NewCaptchaImageBase64(id, value)
 
 	log.Info().Msgf("created captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
 
-	return &CaptchaDTO{
-		Id:          id,
-		ImageBase64: base64.StdEncoding.EncodeToString(buf.Bytes()),
-	}, nil
+	return &CaptchaDTO{id, imageBase64}, nil
 }
 
 func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
@@ -132,10 +123,7 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 		return ErrNoSuchCaptcha
 	}
 
-	hashBytes := sha1.Sum([]byte(value + CaptchaSecret))
-	hash := hex.EncodeToString(hashBytes[:])
-
-	if hash != storedHash {
+	if s.hashCaptcha(value) != storedHash {
 		log.Info().Msgf("wrong captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
 		return ErrWrongCaptcha
 	}

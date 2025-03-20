@@ -1,12 +1,18 @@
 package common
 
 import (
+	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
+
+	"github.com/asaskevich/govalidator"
 )
 
-const ShortIdCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+var shortIdRegexp = regexp.MustCompile(`^\w+$`)
+
+const shortIdCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 func NewShortId(size int) string {
 	sb := strings.Builder{}
@@ -15,12 +21,33 @@ func NewShortId(size int) string {
 	r := rand.New(src)
 
 	for range size {
-		rNum := r.Intn(len(ShortIdCharset))
-		randChar := ShortIdCharset[rNum]
+		rNum := r.Intn(len(shortIdCharset))
+		randChar := shortIdCharset[rNum]
 		sb.WriteByte(randChar)
 	}
 
 	return sb.String()
+}
+
+func ValidateShortId(value string) bool {
+	return shortIdRegexp.MatchString(value)
+}
+
+func ValidateUrl(url string) string {
+	if len(url) > 2000 {
+		return ""
+	}
+
+	url = strings.TrimSpace(url)
+	if !govalidator.IsURL(url) {
+		return ""
+	}
+
+	if !strings.HasSuffix(url, "http") || !strings.HasSuffix(url, "https") {
+		url = fmt.Sprintf("https://%s", url)
+	}
+
+	return url
 }
 
 func NewDigitsString(size int) string {
