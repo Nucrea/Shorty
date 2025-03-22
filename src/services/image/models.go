@@ -8,10 +8,12 @@ type ImageMetadataDTO struct {
 }
 
 type ImageMetadataExDTO struct {
-	Id          string
-	Name        string
-	Size        int
-	Hash        string
-	OriginalId  string
-	ThumbnailId string
+	Id                  string
+	Name                string
+	Size                int
+	Hash                string
+	OriginalId          string
+	OriginalResourceId  string
+	ThumbnailId         string
+	ThumbnailResourceId string
 }

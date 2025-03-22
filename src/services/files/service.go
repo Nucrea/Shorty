@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"shorty/src/common"
-	"shorty/src/common/assets"
 	"shorty/src/common/broker"
 	"shorty/src/common/logging"
+	"shorty/src/services/assets"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/minio/minio-go/v7"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -24,12 +22,12 @@ const (
 	MaxSize    = 20 * 1024 * 1024
 )
 
-func NewService(pg *pgxpool.Pool, mc *minio.Client, log logging.Logger, tracer trace.Tracer) *Service {
+func NewService(metaRepo MetadataRepo, assetsStorage *assets.Storage, log logging.Logger, tracer trace.Tracer) *Service {
 	return &Service{
 		log:          log.WithService("files"),
 		tracer:       tracer,
-		assetStorage: assets.NewStorage(pg, mc, tracer, log),
-		infoStorage:  newMetadataRepo(pg, tracer),
+		assetStorage: assetsStorage,
+		metaRepo:     metaRepo,
 	}
 }
 
@@ -38,7 +36,7 @@ type Service struct {
 	tracer       trace.Tracer
 	broker       broker.Broker
 	assetStorage *assets.Storage
-	infoStorage  *metadataRepo
+	metaRepo     MetadataRepo
 }
 
 func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte) (*FileMetadataDTO, error) {
@@ -62,7 +60,7 @@ func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte)
 		FileId: result[0].Id,
 		Name:   name,
 	}
-	if err := s.infoStorage.SaveFileMetadata(ctx, *metadata); err != nil {
+	if err := s.metaRepo.SaveFileMetadata(ctx, *metadata); err != nil {
 		log.Error().Err(err).Msg("err saving file info")
 		return nil, ErrInternal
 	}
@@ -78,7 +76,7 @@ func (s *Service) GetFileMetadata(ctx context.Context, id string) (*FileMetadata
 	ctx, span := s.tracer.Start(ctx, "files::GetFileMetadata")
 	defer span.End()
 
-	meta, err := s.infoStorage.GetFileMetadata(ctx, id)
+	meta, err := s.metaRepo.GetFileMetadata(ctx, id)
 	if err != nil {
 		log.Error().Err(err).Msg("failed getting file info")
 		return nil, ErrInternal

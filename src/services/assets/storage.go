@@ -6,25 +6,27 @@ import (
 	"shorty/src/common/logging"
 	"strings"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/minio/minio-go/v7"
+	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewStorage(pgxPool *pgxpool.Pool, s3 *minio.Client, tracer trace.Tracer, logger logging.Logger) *Storage {
+func NewStorage(metaRepo MetadataRepo, s3 *minio.Client, rdb *redis.Client, tracer trace.Tracer, logger logging.Logger) *Storage {
 	return &Storage{
-		logger:   logger,
-		tracer:   tracer,
-		fileRepo: newFileRepo(s3, tracer),
-		metaRepo: newMetadataRepo(pgxPool, tracer),
+		logger:    logger,
+		tracer:    tracer,
+		fileRepo:  newFileRepo(s3, tracer),
+		metaRepo:  metaRepo,
+		metaCache: &cache{rdb, tracer},
 	}
 }
 
 type Storage struct {
-	logger   logging.Logger
-	tracer   trace.Tracer
-	fileRepo *fileRepo
-	metaRepo *metadataRepo
+	logger    logging.Logger
+	tracer    trace.Tracer
+	fileRepo  *fileRepo
+	metaRepo  MetadataRepo
+	metaCache *cache
 }
 
 func (s *Storage) SaveAssets(ctx context.Context, bucket string, assets ...[]byte) ([]AssetMetadataDTO, error) {
@@ -38,10 +40,11 @@ func (s *Storage) SaveAssets(ctx context.Context, bucket string, assets ...[]byt
 	for i, asset := range assets {
 		ids[i] = common.NewShortId(32)
 		metadatas[i] = AssetMetadataDTO{
-			Id:     ids[i],
-			Size:   len(asset),
-			Hash:   common.NewAssetHash(asset),
-			Bucket: bucket,
+			Id:         ids[i],
+			ResourceId: common.NewShortId(32),
+			Size:       len(asset),
+			Hash:       common.NewAssetHash(asset),
+			Bucket:     bucket,
 		}
 	}
 
@@ -52,7 +55,7 @@ func (s *Storage) SaveAssets(ctx context.Context, bucket string, assets ...[]byt
 
 	for i, asset := range assets {
 		meta := metadatas[i]
-		if err := s.fileRepo.SaveFile(ctx, bucket, meta.Id, asset); err != nil {
+		if err := s.fileRepo.SaveFile(ctx, bucket, meta.ResourceId, asset); err != nil {
 			log.Error().Err(err).Msgf("failed saving asset file, bucket=%s", bucket)
 			return nil, err
 		}
@@ -73,7 +76,32 @@ func (s *Storage) SaveAssets(ctx context.Context, bucket string, assets ...[]byt
 
 	log.Info().Msgf("saved assets, bucket=%s, ids=%s", bucket, sb.String())
 
+	for _, meta := range metadatas {
+		if err := s.metaCache.PutMetadata(ctx, meta); err != nil {
+			s.logger.Warning().Err(err).Msg("failed putting metadata to cache")
+		}
+	}
+
 	return metadatas, nil
+}
+
+func (s *Storage) getAssetMetadata(ctx context.Context, id string) (*AssetMetadataDTO, error) {
+	if meta, err := s.metaCache.GetMetadata(ctx, id); err == nil && meta != nil {
+		return meta, nil
+	}
+
+	meta, err := s.metaRepo.GetAssetMetadata(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if meta == nil {
+		return nil, nil
+	}
+
+	if err := s.metaCache.PutMetadata(ctx, *meta); err != nil {
+		s.logger.Warning().Err(err).Msg("failed putting metadata to cache")
+	}
+	return meta, nil
 }
 
 func (s *Storage) GetAssetBytes(ctx context.Context, bucket, id string) ([]byte, error) {
@@ -81,6 +109,11 @@ func (s *Storage) GetAssetBytes(ctx context.Context, bucket, id string) ([]byte,
 
 	ctx, span := s.tracer.Start(ctx, "assets::GetAssetBytes")
 	defer span.End()
+
+	meta, err := s.getAssetMetadata(ctx, id)
+	if meta == nil {
+		log.Info().Msgf("no such asset, bucket=%s id=%s", bucket, id)
+	}
 
 	fileBytes, err := s.fileRepo.GetFile(ctx, bucket, id)
 	if err != nil {

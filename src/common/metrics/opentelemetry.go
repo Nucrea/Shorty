@@ -10,13 +10,13 @@ import (
 
 var _ Meter = (*otelMetrics)(nil)
 
-func NewOtel(prefix string, otelUrl string) *otelMetrics {
+func NewOtel(prefix string, otelUrl string) (*otelMetrics, error) {
 	exporter, err := otlpmetrichttp.New(
 		context.Background(),
 		otlpmetrichttp.WithEndpointURL(otelUrl),
 	)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	provider := sdkMetric.NewMeterProvider(
@@ -24,7 +24,7 @@ func NewOtel(prefix string, otelUrl string) *otelMetrics {
 			sdkMetric.NewPeriodicReader(exporter)))
 	return &otelMetrics{
 		meter: provider.Meter("shorty"),
-	}
+	}, nil
 }
 
 type otelMetrics struct {
