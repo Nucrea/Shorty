@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 	"shorty/src/common"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/trace"
@@ -17,16 +18,16 @@ var (
 	ErrInternal   = errors.New("internal error")
 )
 
-func NewService(pgConn *pgxpool.Pool, log logger.Logger, appUrl string, tracer trace.Tracer) *Service {
+func NewService(pgConn *pgxpool.Pool, log logging.Logger, appUrl string, tracer trace.Tracer, meter metrics.Meter) *Service {
 	return &Service{
 		log:     log.WithService("links"),
 		tracer:  tracer,
-		storage: NewStorage(pgConn, tracer),
+		storage: NewStorage(pgConn, tracer, meter),
 	}
 }
 
 type Service struct {
-	log     logger.Logger
+	log     logging.Logger
 	tracer  trace.Tracer
 	storage *storage
 }

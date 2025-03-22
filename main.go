@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"shorty/server"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 	"shorty/src/common/tracing"
 	"shorty/src/services/files"
 	"shorty/src/services/guard"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/minio/minio-go/v7"
@@ -25,7 +27,7 @@ func main() {
 		panic(fmt.Errorf("error parsing environment variables: %w", err))
 	}
 
-	log, err := logger.New(conf.LogFile)
+	log, err := logging.New(conf.LogFile)
 	if err != nil {
 		panic(err)
 	}
@@ -41,12 +43,27 @@ func main() {
 	}
 	rdb := redis.NewClient(redisOpts)
 
+	meter := metrics.NewNoop()
 	tracer := tracing.NewNoopTracer()
 	if conf.OTELUrl != "" {
 		tracer, err = tracing.NewTracer(conf.OTELUrl)
 		if err != nil {
 			log.Fatal().Err(err).Msg("error init tracer")
 		}
+
+		meter = metrics.NewOtel("shorty", conf.OTELUrl)
+		go func() {
+			m := meter.NewCounter("test", "test")
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					m.Inc()
+					time.Sleep(time.Second)
+				}
+			}
+		}()
 	}
 
 	s3, err := minio.New(conf.MinioEndpoint, &minio.Options{
@@ -57,7 +74,7 @@ func main() {
 		log.Fatal().Err(err).Msg("error init minio client")
 	}
 
-	linksService := links.NewService(dbPool, log, conf.AppUrl, tracer)
+	linksService := links.NewService(dbPool, log, conf.AppUrl, tracer, meter)
 	guardService := guard.NewService(rdb, log, tracer)
 	imageService := image.NewService(dbPool, s3, log, tracer)
 	fileService := files.NewService(dbPool, s3, log, tracer)

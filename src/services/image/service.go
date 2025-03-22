@@ -10,7 +10,7 @@ import (
 	"shorty/src/common"
 	"shorty/src/common/assets"
 	"shorty/src/common/broker"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
 
 	"github.com/anthonynsimon/bild/transform"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -31,7 +31,7 @@ const (
 	MaxImageSize = 5 * 1024 * 1024
 )
 
-func NewService(pg *pgxpool.Pool, s3 *minio.Client, log logger.Logger, tracer trace.Tracer) *Service {
+func NewService(pg *pgxpool.Pool, s3 *minio.Client, log logging.Logger, tracer trace.Tracer) *Service {
 	return &Service{
 		log:          log.WithService("image"),
 		tracer:       tracer,
@@ -41,7 +41,7 @@ func NewService(pg *pgxpool.Pool, s3 *minio.Client, log logger.Logger, tracer tr
 }
 
 type Service struct {
-	log          logger.Logger
+	log          logging.Logger
 	tracer       trace.Tracer
 	broker       broker.Broker
 	assetStorage *assets.Storage

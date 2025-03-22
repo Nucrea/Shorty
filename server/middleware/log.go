@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
 	"shorty/src/common/tracing"
 	"time"
 
@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func Log(log logger.Logger) gin.HandlerFunc {
+func Log(log logging.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestId := c.GetHeader("X-Request-Id")
 		if requestId == "" {
@@ -22,7 +22,7 @@ func Log(log logger.Logger) gin.HandlerFunc {
 		// 	path = path + "?" + c.Request.URL.RawQuery
 		// }
 
-		logger.SetCtxRequestId(c, requestId)
+		logging.SetCtxRequestId(c, requestId)
 
 		start := time.Now()
 		c.Next()

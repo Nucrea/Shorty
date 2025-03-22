@@ -8,7 +8,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func NewMetrics(prefix string) Metrics {
+var _ Meter = (*prometheusMetrics)(nil)
+
+func NewPrometheus(prefix string) *prometheusMetrics {
 	registry := prometheus.NewRegistry()
 	registerer := prometheus.WrapRegistererWithPrefix(prefix, registry)
 
@@ -17,18 +19,18 @@ func NewMetrics(prefix string) Metrics {
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
 
-	return &prometheusWrapper{
+	return &prometheusMetrics{
 		registry:   registry,
 		registerer: registerer,
 	}
 }
 
-type prometheusWrapper struct {
+type prometheusMetrics struct {
 	registry   *prometheus.Registry
 	registerer prometheus.Registerer
 }
 
-func (m *prometheusWrapper) NewCounter(name, description string) Counter {
+func (m *prometheusMetrics) NewCounter(name, description string) Counter {
 	collector := prometheus.NewCounter(prometheus.CounterOpts{
 		Name: name,
 		Help: description,
@@ -37,7 +39,7 @@ func (m *prometheusWrapper) NewCounter(name, description string) Counter {
 	return collector
 }
 
-func (m *prometheusWrapper) NewGauge(name, description string) Gauge {
+func (m *prometheusMetrics) NewGauge(name, description string) Gauge {
 	collector := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: name,
 		Help: description,
@@ -46,15 +48,16 @@ func (m *prometheusWrapper) NewGauge(name, description string) Gauge {
 	return collector
 }
 
-func (m *prometheusWrapper) NewHistogram(name, description string) Histogram {
+func (m *prometheusMetrics) NewHistogram(name, description string, buckets []float64) Histogram {
 	collector := prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name: name,
-		Help: description,
+		Name:    name,
+		Help:    description,
+		Buckets: buckets,
 	})
 	m.registerer.MustRegister(collector)
 	return collector
 }
 
-func (m *prometheusWrapper) HttpHandler() http.Handler {
+func (m *prometheusMetrics) HttpHandler() http.Handler {
 	return promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{Registry: m.registerer})
 }

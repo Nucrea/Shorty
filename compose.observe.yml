@@ -38,6 +38,20 @@ services:
       - tempo-volume:/var/tempo
     depends_on:
       - tempo-init
+  
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    command: [ "--web.enable-otlp-receiver", "--config.file=/etc/prometheus.yml" ]
+    extra_hosts:
+      - "host.docker.internal=host-gateway"
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus.yml
+    ports:
+      - 9090:9090
+
+# networks:
+#   host:
+#     driver: 
 
 volumes:
   tempo-volume:

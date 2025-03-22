@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"shorty/server/middleware"
 	"shorty/server/pages"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
 	"shorty/src/common/tracing"
 	"shorty/src/services/files"
 	"shorty/src/services/guard"
@@ -24,7 +24,7 @@ var staticFS embed.FS
 
 type Opts struct {
 	Url          string
-	Log          logger.Logger
+	Log          logging.Logger
 	Tracer       trace.Tracer
 	LinksService *links.Service
 	GuardService *guard.Service

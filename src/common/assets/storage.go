@@ -3,7 +3,7 @@ package assets
 import (
 	"context"
 	"shorty/src/common"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -11,7 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewStorage(pgxPool *pgxpool.Pool, s3 *minio.Client, tracer trace.Tracer, logger logger.Logger) *Storage {
+func NewStorage(pgxPool *pgxpool.Pool, s3 *minio.Client, tracer trace.Tracer, logger logging.Logger) *Storage {
 	return &Storage{
 		logger:   logger,
 		tracer:   tracer,
@@ -21,7 +21,7 @@ func NewStorage(pgxPool *pgxpool.Pool, s3 *minio.Client, tracer trace.Tracer, lo
 }
 
 type Storage struct {
-	logger   logger.Logger
+	logger   logging.Logger
 	tracer   trace.Tracer
 	fileRepo *fileRepo
 	metaRepo *metadataRepo

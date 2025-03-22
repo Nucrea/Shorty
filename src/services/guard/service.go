@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"shorty/src/common"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -34,7 +34,7 @@ const (
 	CaptchaTTL = 2 * time.Minute
 )
 
-func NewService(rdb *redis.Client, log logger.Logger, tracer trace.Tracer) *Service {
+func NewService(rdb *redis.Client, log logging.Logger, tracer trace.Tracer) *Service {
 	return &Service{
 		log:     log.WithService("guard"),
 		tracer:  tracer,
@@ -43,7 +43,7 @@ func NewService(rdb *redis.Client, log logger.Logger, tracer trace.Tracer) *Serv
 }
 
 type Service struct {
-	log     logger.Logger
+	log     logging.Logger
 	tracer  trace.Tracer
 	storage *storage
 }

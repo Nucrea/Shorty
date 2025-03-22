@@ -10,7 +10,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"runtime"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +27,7 @@ var (
 	slash     = []byte("/")
 )
 
-func Recovery(handle gin.HandlerFunc, logger logger.Logger, debugMode bool) gin.HandlerFunc {
+func Recovery(handle gin.HandlerFunc, logger logging.Logger, debugMode bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
