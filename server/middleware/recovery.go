@@ -54,6 +54,12 @@ func Recovery(handle gin.HandlerFunc, logger logger.Logger, debugMode bool) gin.
 							headers[idx] = current[0] + ": *"
 						}
 					}
+
+					errStr, isErrStr := err.(string)
+					if isErrStr {
+						err = fmt.Errorf(errStr)
+					}
+
 					headersToStr := strings.Join(headers, "\r\n")
 					if brokenPipe {
 						logger.Printf("%s\n%s%s", err, headersToStr, reset)

@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"shorty/src/common"
 	"shorty/src/common/logger"
 	"time"
@@ -23,7 +22,6 @@ var (
 	ErrNoSuchCaptcha = errors.New("no such captcha")
 
 	captchaSecret = common.NewShortId(10)
-	tokenSecret   = common.NewShortId(10)
 )
 
 const (
@@ -135,18 +133,4 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 
 	log.Info().Msgf("approved captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
 	return nil
-}
-
-func (s *Service) CreateResourceToken(resource string, ttl time.Duration) ExpiringToken {
-	expiresAt := time.Now().Add(ttl).UnixMicro()
-	raw := fmt.Sprintf("%s%d%s", resource, expiresAt, tokenSecret)
-	return ExpiringToken{
-		Value:   s.hashsum(raw),
-		Exipres: expiresAt,
-	}
-}
-
-func (s *Service) CheckResourceToken(resource string, expiresAt int64, token string) bool {
-	value := fmt.Sprintf("%s%d%s", resource, expiresAt, tokenSecret)
-	return s.hashsum(value) == token
 }

@@ -33,7 +33,7 @@ func (s *server) FileDownload(c *gin.Context) {
 		return
 	}
 
-	token := s.GuardService.CreateResourceToken(id, 10*time.Second)
+	token := NewResourceToken(id, time.Now().Add(15*time.Minute))
 	fileRawUrl := fmt.Sprintf("%s/f/%s/%s?token=%s&expires=%d", s.Url, meta.Id, meta.Name, token.Value, token.Exipres)
 
 	s.pages.FileDownload(c, fileRawUrl)

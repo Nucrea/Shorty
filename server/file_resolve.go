@@ -21,8 +21,8 @@ func (s *server) FileResolve(c *gin.Context) {
 	token, expiresStr := c.Query("token"), c.Query("expires")
 	expires, _ := strconv.Atoi(expiresStr)
 
-	expired := int(time.Now().UnixMicro()) > expires
-	valid := s.GuardService.CheckResourceToken(id, int64(expires), token)
+	expired := int(time.Now().Unix()) > expires
+	valid := CheckResourceToken(id, int64(expires), token)
 
 	if expired || !valid {
 		s.Log.WithContext(c).Info().Msgf("file (id=%s) token(%s) expired, redirecting to view", id, common.MaskSecret(token))
