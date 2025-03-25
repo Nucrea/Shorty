@@ -27,7 +27,7 @@ func main() {
 		panic(fmt.Errorf("error parsing environment variables: %w", err))
 	}
 
-	logger, err := logging.New(conf.LogFile)
+	logger, err := logging.NewZerolog(conf.LogFile)
 	if err != nil {
 		panic(err)
 	}
