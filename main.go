@@ -27,7 +27,9 @@ func main() {
 		panic(fmt.Errorf("error parsing environment variables: %w", err))
 	}
 
-	logger, err := logging.NewZerolog(conf.LogFile)
+	logger, err := logging.NewLogger(
+		// logging.WithFile(conf.LogFile),
+		logging.WithOpenTelemetry(conf.OTELUrl))
 	if err != nil {
 		panic(err)
 	}

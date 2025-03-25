@@ -122,7 +122,7 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 		return ErrInternal
 	}
 	if storedHash == "" {
-		log.Info().Msgf("no such captcha with id=%s", common.MaskSecret(id), common.MaskSecret(value))
+		log.Info().Msgf("no such captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
 		return ErrNoSuchCaptcha
 	}
 

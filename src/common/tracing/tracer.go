@@ -13,7 +13,7 @@ import (
 )
 
 func NewNoopTracer() trace.Tracer {
-	return noop.NewTracerProvider().Tracer("shorty")
+	return noop.Tracer{}
 }
 
 func NewTracer(otelUrl string) (trace.Tracer, error) {

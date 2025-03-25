@@ -16,13 +16,6 @@ services:
      image: grafana/loki:3.0.0
      command: -config.file=/etc/loki/local-config.yaml
 
-  alloy:
-    image: grafana/alloy:v1.7.1
-    volumes:
-      - ./deploy/config.alloy:/etc/alloy/config.alloy
-      - ./.run/shorty.log:/var/log/shorty.log:ro"
-    command: 'run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy'
-
   tempo-init:
     image: &tempoImage grafana/tempo:r177-60780f7
     user: root

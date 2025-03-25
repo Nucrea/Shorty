@@ -16,7 +16,7 @@ services:
       - 6379:6379
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.108.0
+    image: otel/opentelemetry-collector-contrib:0.122.1
     volumes:
       - ./deploy/otel.yml:/etc/otelcol-contrib/config.yaml
     ports:
