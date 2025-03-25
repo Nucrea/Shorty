@@ -8,6 +8,7 @@ import (
 	"shorty/src/services/assets"
 	"shorty/src/services/files"
 	"shorty/src/services/image"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -116,9 +117,9 @@ func (p *Postgres) GetAssetMetadata(ctx context.Context, id string) (*assets.Ass
 func (p *Postgres) SaveAssetsMetadata(ctx context.Context, metas ...assets.AssetMetadataDTO) error {
 	defer observe(ctx, p, "SaveAssetsMetadata")()
 
-	rows := [][]interface{}{}
+	rows := [][]any{}
 	for _, meta := range metas {
-		rows = append(rows, []interface{}{meta.Id, meta.ResourceId, meta.Size, meta.Hash, meta.Bucket})
+		rows = append(rows, []any{meta.Id, meta.ResourceId, meta.Size, meta.Hash, meta.Bucket})
 	}
 
 	copyCount, err := p.db.CopyFrom(ctx,
@@ -137,9 +138,6 @@ func (p *Postgres) SaveAssetsMetadata(ctx context.Context, metas ...assets.Asset
 }
 
 func (p *Postgres) SetAssetsStatus(ctx context.Context, status assets.AssetStatus, ids ...string) error {
-	// defer observe(ctx, p, "SetAssetsStatus")()
-
-	// query := `update assets set status=$1 where ids=1`
-
-	return nil
+	query := `update assets set status=$1 where id in ($1);`
+	return exec(ctx, p, "SetAssetsStatus", query, strings.Join(ids, ","))
 }
