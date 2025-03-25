@@ -14,7 +14,9 @@ import (
 	"shorty/src/services/guard"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -68,6 +70,13 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.Use(middleware.Log(s.Log))
 	server.Use(tracing.NewMiddleware(s.Tracer))
 	server.Use(middleware.Ratelimit(s.GuardService, s.pages))
+	server.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{s.Url},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	server.GET("/link", s.pages.LinkForm)
 	server.POST("/link", s.LinkResult)
