@@ -27,7 +27,7 @@
         "uid": "loki"
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 24,
         "x": 0,
         "y": 0
@@ -40,8 +40,8 @@
         "showCommonLabels": false,
         "showLabels": false,
         "showTime": false,
-        "sortOrder": "Ascending",
-        "wrapLogMessage": false
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
       },
       "targets": [
         {
@@ -66,10 +66,11 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": "auto",
+            "align": "left",
             "cellOptions": {
               "type": "auto"
             },
+            "filterable": true,
             "inspect": false
           },
           "mappings": [],
@@ -90,23 +91,30 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 10,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 9
       },
       "id": 2,
       "options": {
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
+          "enablePagination": true,
           "fields": "",
           "reducer": [
             "sum"
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Start time"
+          }
+        ]
       },
       "pluginVersion": "11.0.0",
       "targets": [
@@ -128,6 +136,7 @@
           "queryType": "traceqlSearch",
           "refId": "A",
           "serviceMapQuery": "",
+          "spss": 3,
           "tableType": "traces"
         }
       ],
@@ -148,8 +157,8 @@
   "timeRangeUpdatedDuringEditOrView": false,
   "timepicker": {},
   "timezone": "browser",
-  "title": "New dashboard",
+  "title": "Logs",
   "uid": "def52gmyckirkd",
-  "version": 2,
+  "version": 5,
   "weekStart": ""
 }

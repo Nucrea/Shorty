@@ -9,8 +9,6 @@ import (
 )
 
 func observe(ctx context.Context, p *Postgres, funcName string) func() {
-	hist := p.meter.NewHistogram(funcName, "test", DefaultBuckets)
-
 	_, span := p.tracer.Start(ctx, fmt.Sprintf("postgres::%s", funcName))
 	defer span.End()
 
@@ -18,7 +16,7 @@ func observe(ctx context.Context, p *Postgres, funcName string) func() {
 	return func() {
 		span.End()
 		duration := time.Now().Sub(start).Milliseconds()
-		hist.Observe(float64(duration))
+		p.latencyHist.ObserveWithLabel(float64(duration), funcName)
 	}
 }
 

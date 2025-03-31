@@ -6,11 +6,12 @@ services:
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Editor
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/dashboard.json
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/logs_dashboard.json
     volumes:
-      - ./deploy/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yaml:ro
-      - ./deploy/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
       - ./deploy/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./deploy/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yaml:ro
+      - ./deploy/logs_dashboard.json:/etc/grafana/provisioning/dashboards/logs_dashboard.json
+      - ./deploy/perf_dashboard.json:/etc/grafana/provisioning/dashboards/perf_dashboard.json
 
   loki:
      image: grafana/loki:3.0.0

@@ -15,8 +15,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-var DefaultBuckets = []float64{1, 10, 50, 100, 200}
-
 func NewPostgres(ctx context.Context, connUrl string, logger logging.Logger, tracer trace.Tracer, meter metrics.Meter) (*Postgres, error) {
 	dbPool, err := pgxpool.New(ctx, connUrl)
 	if err != nil {
@@ -27,14 +25,21 @@ func NewPostgres(ctx context.Context, connUrl string, logger logging.Logger, tra
 		tracer: tracer,
 		logger: logger,
 		meter:  meter,
+		latencyHist: meter.NewHistogram(
+			"postgres_query_latency",
+			"Latency of postgresql queries",
+			[]float64{1, 10, 50, 100, 200},
+		),
 	}, nil
 }
 
 type Postgres struct {
-	db     *pgxpool.Pool
 	tracer trace.Tracer
 	logger logging.Logger
 	meter  metrics.Meter
+
+	db          *pgxpool.Pool
+	latencyHist metrics.Histogram
 }
 
 func (p *Postgres) SaveImageMetadata(ctx context.Context, meta image.ImageMetadataDTO) error {

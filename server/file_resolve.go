@@ -25,7 +25,7 @@ func (s *server) FileResolve(c *gin.Context) {
 	valid := CheckResourceToken(id, int64(expires), token)
 
 	if expired || !valid {
-		s.Log.WithContext(c).Info().Msgf("file (id=%s) token(%s) expired, redirecting to view", id, common.MaskSecret(token))
+		s.Logger.WithContext(c).Info().Msgf("file (id=%s) token(%s) expired, redirecting to view", id, common.MaskSecret(token))
 		viewUrl := fmt.Sprintf("%s/file/view/%s?err=%s", s.Url, id, url.QueryEscape("Download link expired"))
 		c.Redirect(302, viewUrl)
 		return

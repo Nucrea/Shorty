@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/metric"
 	sdkMetric "go.opentelemetry.io/otel/sdk/metric"
@@ -80,4 +81,12 @@ type otelHistogram struct {
 
 func (o otelHistogram) Observe(value float64) {
 	o.Float64Histogram.Record(context.Background(), value)
+}
+
+func (o otelHistogram) ObserveWithLabel(value float64, label string) {
+	o.Float64Histogram.Record(
+		context.Background(),
+		value,
+		metric.WithAttributes(attribute.String("label", label)),
+	)
 }

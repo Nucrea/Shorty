@@ -12,6 +12,7 @@ type Gauge interface {
 
 type Histogram interface {
 	Observe(float64)
+	ObserveWithLabel(value float64, label string)
 }
 
 type Meter interface {

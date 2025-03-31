@@ -72,8 +72,9 @@ func main() {
 
 	srv := server.New(server.Opts{
 		Url:          conf.AppUrl,
-		Log:          logger,
+		Logger:       logger,
 		Tracer:       tracer,
+		Meter:        meter,
 		LinksService: linksService,
 		GuardService: guardService,
 		ImageService: imageService,

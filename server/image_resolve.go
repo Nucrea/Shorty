@@ -47,7 +47,7 @@ func (s *server) ImageResolve(c *gin.Context) {
 		valid := CheckResourceToken(id, int64(expires), token)
 
 		if expired || !valid {
-			s.Log.WithContext(c).Info().Msgf("image (id=%s) token(%s) expired, redirecting to view", id, common.MaskSecret(token))
+			s.Logger.WithContext(c).Info().Msgf("image (id=%s) token(%s) expired, redirecting to view", id, common.MaskSecret(token))
 			viewUrl := fmt.Sprintf("%s/image/view/%s", s.Url, meta.Id)
 			c.Redirect(302, viewUrl)
 			return
@@ -55,7 +55,7 @@ func (s *server) ImageResolve(c *gin.Context) {
 	}
 
 	if oldEtag := c.GetHeader("If-None-Match"); oldEtag == meta.Hash {
-		s.Log.WithContext(c).Info().Msgf("image (id=%s) hash does not changed", id)
+		s.Logger.WithContext(c).Info().Msgf("image (id=%s) hash does not changed", id)
 		c.AbortWithStatus(http.StatusNotModified)
 		return
 	}

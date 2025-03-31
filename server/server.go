@@ -9,6 +9,7 @@ import (
 	"shorty/server/middleware"
 	"shorty/server/pages"
 	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 	"shorty/src/common/tracing"
 	"shorty/src/services/files"
 	"shorty/src/services/guard"
@@ -26,8 +27,9 @@ var staticFS embed.FS
 
 type Opts struct {
 	Url          string
-	Log          logging.Logger
+	Logger       logging.Logger
 	Tracer       trace.Tracer
+	Meter        metrics.Meter
 	LinksService *links.Service
 	GuardService *guard.Service
 	ImageService *image.Service
@@ -35,7 +37,7 @@ type Opts struct {
 }
 
 func New(opts Opts) *server {
-	opts.Log = opts.Log.WithService("server")
+	opts.Logger = opts.Logger.WithService("server")
 	return &server{opts, &pages.Site{}}
 }
 
@@ -47,7 +49,7 @@ type server struct {
 func (s *server) Run(ctx context.Context, port uint16) {
 	staticDir, err := fs.Sub(staticFS, "static")
 	if err != nil {
-		s.Log.Fatal().Err(err).Msg("opening static files dir")
+		s.Logger.Fatal().Err(err).Msg("opening static files dir")
 	}
 
 	gin.SetMode(gin.ReleaseMode)
@@ -56,7 +58,7 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.ContextWithFallback = true // allows getting values from gin ctx, needed for tracing
 
 	server.NoRoute(s.pages.NotFound)
-	server.Use(middleware.Recovery(s.pages.InternalError, s.Log, true))
+	server.Use(middleware.Recovery(s.pages.InternalError, s.Logger, true))
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
@@ -68,7 +70,8 @@ func (s *server) Run(ctx context.Context, port uint16) {
 		ctx.Redirect(302, "/link")
 	})
 
-	server.Use(middleware.Log(s.Log))
+	server.Use(middleware.Log(s.Logger))
+	server.Use(middleware.Metrics(s.Meter))
 	server.Use(tracing.NewMiddleware(s.Tracer))
 	server.Use(middleware.Ratelimit(s.GuardService, s.pages))
 	server.Use(cors.New(cors.Config{
@@ -94,6 +97,6 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.GET("/file/download/:id", s.FileDownload)
 	server.GET("/f/:id/:name", s.FileResolve)
 
-	s.Log.Info().Msgf("Started server on port %d", port)
+	s.Logger.Info().Msgf("Started server on port %d", port)
 	server.Run(fmt.Sprintf(":%d", port))
 }
