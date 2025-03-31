@@ -7,8 +7,6 @@ import (
 	"os"
 	"time"
 
-	otellog "go.opentelemetry.io/otel/log"
-
 	"github.com/rs/zerolog"
 )
 
@@ -29,19 +27,19 @@ func NewLogger(opts ...Option) (Logger, error) {
 		writer = io.MultiWriter(os.Stdout, file)
 	}
 
+	// otel := newOtelNoop()
+	// if conf.OtelUrl != "" {
+	// 	otel = newOtel(conf.OtelUrl)
+	// }
+
 	l := zerolog.New(writer).
 		Level(zerolog.DebugLevel).
 		With().Timestamp().
 		Logger()
 
-	otel := newOtelNoop()
-	if conf.OtelUrl != "" {
-		otel = newOtel(conf.OtelUrl)
-	}
-
 	return &logger{
 		zeroLogger: &l,
-		otel:       otel,
+		// otel:       otel,
 	}, nil
 }
 
@@ -49,7 +47,7 @@ type logger struct {
 	service    string
 	requestId  string
 	zeroLogger *zerolog.Logger
-	otel       otellog.Logger
+	// otel       otellog.Logger
 }
 
 func (l logger) Log() Event {
@@ -77,7 +75,7 @@ func (l logger) Printf(format string, v ...any) {
 }
 
 func (l logger) wrapEvent(zerologEvent *zerolog.Event) Event {
-	var e Event = event{zerologEvent, l.otel, otellog.Record{}}
+	var e Event = event{zerologEvent}
 
 	if l.requestId != "" {
 		e = e.Str("requestId", l.requestId)
@@ -100,7 +98,7 @@ func (l logger) WithContext(ctx context.Context) Logger {
 		service:    l.service,
 		requestId:  requestId,
 		zeroLogger: l.zeroLogger,
-		otel:       l.otel,
+		// otel:       l.otel,
 	}
 }
 
@@ -109,36 +107,36 @@ func (l logger) WithService(service string) Logger {
 		service:    service,
 		requestId:  l.requestId,
 		zeroLogger: l.zeroLogger,
-		otel:       l.otel,
+		// otel:       l.otel,
 	}
 }
 
 type event struct {
 	zerologEvent *zerolog.Event
-	otel         otellog.Logger
-	record       otellog.Record
+	// otel         otellog.Logger
+	// record       otellog.Record
 }
 
 func (e event) Int(key string, val int) Event {
-	(&e.record).AddAttributes(otellog.Int(key, val))
+	// (&e.record).AddAttributes(otellog.Int(key, val))
 	e.zerologEvent = e.zerologEvent.Int(key, val)
 	return e
 }
 
 func (e event) Str(key, val string) Event {
-	(&e.record).AddAttributes(otellog.String(key, val))
+	// (&e.record).AddAttributes(otellog.String(key, val))
 	e.zerologEvent = e.zerologEvent.Str(key, val)
 	return e
 }
 
 func (e event) Dur(key string, dur time.Duration) Event {
-	(&e.record).AddAttributes(otellog.String(key, dur.String()))
+	// (&e.record).AddAttributes(otellog.String(key, dur.String()))
 	e.zerologEvent = e.zerologEvent.Dur(key, dur)
 	return e
 }
 
 func (e event) Err(err error) Event {
-	(&e.record).AddAttributes(otellog.String("error", err.Error()))
+	// (&e.record).AddAttributes(otellog.String("error", err.Error()))
 	e.zerologEvent = e.zerologEvent.Err(err)
 	return e
 }
@@ -146,20 +144,27 @@ func (e event) Err(err error) Event {
 // Never call it twice: event gets disposed after first call
 func (e event) Send() {
 	e.zerologEvent.Send()
-	e.otel.Emit(context.Background(), e.record)
 }
 
 // Never call it twice: event gets disposed after first call
 func (e event) Msg(msg string) {
 	e.zerologEvent.Msg(msg)
-	(&e.record).AddAttributes(otellog.String("message", msg))
-	e.otel.Emit(context.Background(), e.record)
+
+	// r := &e.record
+	// r.AddAttributes(otellog.String("message", msg))
+	// r.SetSeverity(otellog.SeverityInfo)
+	// r.SetBody(otellog.StringValue(msg))
+	// e.otel.Emit(context.Background(), e.record)
 }
 
 // Never call it twice: event gets disposed after first call
 func (e event) Msgf(format string, v ...interface{}) {
 	msg := fmt.Sprintf(format, v...)
 	e.zerologEvent.Msg(msg)
-	(&e.record).AddAttributes(otellog.String("message", msg))
-	e.otel.Emit(context.Background(), e.record)
+
+	// r := &e.record
+	// r.AddAttributes(otellog.String("message", msg))
+	// r.SetSeverity(otellog.SeverityInfo)
+	// r.SetBody(otellog.StringValue(msg))
+	// e.otel.Emit(context.Background(), e.record)
 }

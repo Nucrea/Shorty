@@ -28,8 +28,9 @@ func main() {
 	}
 
 	logger, err := logging.NewLogger(
-		// logging.WithFile(conf.LogFile),
-		logging.WithOpenTelemetry(conf.OTELUrl))
+		logging.WithFile(conf.LogFile),
+		// logging.WithOpenTelemetry(conf.OTELUrl),
+	)
 	if err != nil {
 		panic(err)
 	}

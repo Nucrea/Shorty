@@ -138,6 +138,6 @@ func (p *Postgres) SaveAssetsMetadata(ctx context.Context, metas ...assets.Asset
 }
 
 func (p *Postgres) SetAssetsStatus(ctx context.Context, status assets.AssetStatus, ids ...string) error {
-	query := `update assets set status=$1 where id in ($1);`
-	return exec(ctx, p, "SetAssetsStatus", query, strings.Join(ids, ","))
+	query := `update assets set status=$1 where id in ($2);`
+	return exec(ctx, p, "SetAssetsStatus", query, status, strings.Join(ids, ","))
 }

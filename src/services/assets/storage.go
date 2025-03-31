@@ -115,7 +115,7 @@ func (s *Storage) GetAssetBytes(ctx context.Context, bucket, id string) ([]byte,
 		log.Info().Msgf("no such asset, bucket=%s id=%s", bucket, id)
 	}
 
-	fileBytes, err := s.fileRepo.GetFile(ctx, bucket, id)
+	fileBytes, err := s.fileRepo.GetFile(ctx, bucket, meta.ResourceId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed getting asset bytes, bucket=%s, id=%s", bucket, id)
 		return nil, err
