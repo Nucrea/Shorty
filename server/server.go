@@ -62,6 +62,7 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	})
 
 	StaticFS(server, "/static", http.FS(staticDir))
+	server.StaticFileFS("favicon.ico", "/favicon.ico", http.FS(staticDir))
 
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(302, "/link")
