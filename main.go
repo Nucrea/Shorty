@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"shorty/server"
 	"shorty/src/common/logging"
 	"shorty/src/common/metrics"
@@ -20,11 +21,18 @@ import (
 )
 
 func main() {
+	defer func() {
+		if err := recover(); err != nil {
+			logging.Fatal(fmt.Errorf("panic occured on startup: %v", err))
+			os.Exit(1)
+		}
+	}()
+
 	ctx := context.Background()
 
 	conf, err := NewConfig()
 	if err != nil {
-		panic(fmt.Errorf("error parsing environment variables: %w", err))
+		logging.Fatal(fmt.Errorf("failed parsing environment variables: %w", err))
 	}
 
 	logger, err := logging.NewLogger(
@@ -32,7 +40,7 @@ func main() {
 		// logging.WithOpenTelemetry(conf.OTELUrl),
 	)
 	if err != nil {
-		panic(err)
+		logging.Fatal(fmt.Errorf("failed initializing logger: %w", err))
 	}
 
 	tracer, err := tracing.NewTracer(conf.OTELUrl)
