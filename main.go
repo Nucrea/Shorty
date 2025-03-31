@@ -71,6 +71,7 @@ func main() {
 
 	srv := server.New(server.Opts{
 		Url:          conf.AppUrl,
+		ApiKey:       conf.ApiKey,
 		Logger:       logger,
 		Tracer:       tracer,
 		Meter:        meter,

@@ -11,6 +11,7 @@ import (
 type Config struct {
 	AppUrl      string
 	AppPort     uint16
+	ApiKey      string
 	PostgresUrl string
 	RedisUrl    string
 	LogFile     string
@@ -56,6 +57,11 @@ func NewConfig() (*Config, error) {
 		return nil, fmt.Errorf("bad app url")
 	}
 
+	apiKey := os.Getenv("SHORTY_APP_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("empty api key")
+	}
+
 	minioEndpoint := os.Getenv("SHORTY_MINIO_ENDPOINT")
 	if minioEndpoint == "" {
 		return nil, fmt.Errorf("empty minio endpoint")
@@ -86,6 +92,7 @@ func NewConfig() (*Config, error) {
 	return &Config{
 		AppUrl:            appUrl,
 		AppPort:           uint16(appPort),
+		ApiKey:            apiKey,
 		PostgresUrl:       pgUrl,
 		RedisUrl:          redisUrl,
 		LogFile:           logFile,

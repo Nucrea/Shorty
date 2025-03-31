@@ -27,6 +27,7 @@ var staticFS embed.FS
 
 type Opts struct {
 	Url          string
+	ApiKey       string
 	Logger       logging.Logger
 	Tracer       trace.Tracer
 	Meter        metrics.Meter
@@ -81,6 +82,19 @@ func (s *server) Run(ctx context.Context, port uint16) {
 		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	profGroup := server.Group("/profile")
+	{
+		profGroup.Use(func(c *gin.Context) {
+			if c.GetHeader("Authorization") != s.ApiKey {
+				c.AbortWithStatus(403)
+			} else {
+				c.Next()
+			}
+		})
+		profGroup.POST("/start", s.ProfileStart)
+		profGroup.POST("/stop", s.ProfileStop)
+	}
 
 	server.GET("/link", s.pages.LinkForm)
 	server.POST("/link", s.LinkResult)
