@@ -8,13 +8,16 @@ import (
 	"net/http"
 	"shorty/server/middleware"
 	"shorty/server/pages"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 	"shorty/src/common/tracing"
 	"shorty/src/services/files"
 	"shorty/src/services/guard"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -24,8 +27,10 @@ var staticFS embed.FS
 
 type Opts struct {
 	Url          string
-	Log          logger.Logger
+	ApiKey       string
+	Logger       logging.Logger
 	Tracer       trace.Tracer
+	Meter        metrics.Meter
 	LinksService *links.Service
 	GuardService *guard.Service
 	ImageService *image.Service
@@ -33,7 +38,7 @@ type Opts struct {
 }
 
 func New(opts Opts) *server {
-	opts.Log = opts.Log.WithService("server")
+	opts.Logger = opts.Logger.WithService("server")
 	return &server{opts, &pages.Site{}}
 }
 
@@ -45,7 +50,7 @@ type server struct {
 func (s *server) Run(ctx context.Context, port uint16) {
 	staticDir, err := fs.Sub(staticFS, "static")
 	if err != nil {
-		s.Log.Fatal().Err(err).Msg("opening static files dir")
+		s.Logger.Fatal().Err(err).Msg("opening static files dir")
 	}
 
 	gin.SetMode(gin.ReleaseMode)
@@ -54,20 +59,42 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.ContextWithFallback = true // allows getting values from gin ctx, needed for tracing
 
 	server.NoRoute(s.pages.NotFound)
-	server.Use(middleware.Recovery(s.pages.InternalError, s.Log, true))
+	server.Use(middleware.Recovery(s.pages.InternalError, s.Logger, true))
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
 
 	StaticFS(server, "/static", http.FS(staticDir))
+	server.StaticFileFS("favicon.ico", "/favicon.ico", http.FS(staticDir))
 
 	server.GET("/", func(ctx *gin.Context) {
 		ctx.Redirect(302, "/link")
 	})
 
-	server.Use(middleware.Log(s.Log))
+	server.Use(middleware.Log(s.Logger))
+	server.Use(middleware.Metrics(s.Meter))
 	server.Use(tracing.NewMiddleware(s.Tracer))
 	server.Use(middleware.Ratelimit(s.GuardService, s.pages))
+	server.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{s.Url},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}))
+
+	profGroup := server.Group("/profile")
+	{
+		profGroup.Use(func(c *gin.Context) {
+			if c.GetHeader("Authorization") != s.ApiKey {
+				c.AbortWithStatus(403)
+			} else {
+				c.Next()
+			}
+		})
+		profGroup.POST("/start", s.ProfileStart)
+		profGroup.POST("/stop", s.ProfileStop)
+	}
 
 	server.GET("/link", s.pages.LinkForm)
 	server.POST("/link", s.LinkResult)
@@ -84,6 +111,6 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.GET("/file/download/:id", s.FileDownload)
 	server.GET("/f/:id/:name", s.FileResolve)
 
-	s.Log.Info().Msgf("Started server on port %d", port)
+	s.Logger.Info().Msgf("Started server on port %d", port)
 	server.Run(fmt.Sprintf(":%d", port))
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"shorty/src/common"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -17,22 +17,22 @@ var (
 	ErrInternal   = errors.New("internal error")
 )
 
-func NewService(pgConn *pgxpool.Pool, log logger.Logger, appUrl string, tracer trace.Tracer) *Service {
+func NewService(storage Storage, logger logging.Logger, tracer trace.Tracer, meter metrics.Meter) *Service {
 	return &Service{
-		log:     log.WithService("links"),
+		logger:  logger.WithService("links"),
 		tracer:  tracer,
-		storage: NewStorage(pgConn, tracer),
+		storage: storage,
 	}
 }
 
 type Service struct {
-	log     logger.Logger
+	logger  logging.Logger
 	tracer  trace.Tracer
-	storage *storage
+	storage Storage
 }
 
 func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, error) {
-	log := s.log.WithContext(ctx)
+	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "links::GetByShortId")
 	defer span.End()
@@ -41,7 +41,7 @@ func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, erro
 		return "", ErrBadShortId
 	}
 
-	link, err := s.storage.GetLink(ctx, linkId)
+	link, err := s.storage.GetShortlink(ctx, linkId)
 	if err != nil {
 		log.Error().Err(err).Msgf("getting link with id=%s from storage", linkId)
 		return "", ErrInternal
@@ -57,7 +57,7 @@ func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, erro
 }
 
 func (s *Service) Create(ctx context.Context, url string) (string, error) {
-	log := s.log.WithContext(ctx)
+	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "links::CreateShortlink")
 	defer span.End()
@@ -69,7 +69,7 @@ func (s *Service) Create(ctx context.Context, url string) (string, error) {
 	}
 
 	id := common.NewShortId(10)
-	if err := s.storage.CreateLink(ctx, id, url); err != nil {
+	if err := s.storage.SaveShortlink(ctx, id, url); err != nil {
 		log.Error().Err(err).Msgf("creating qr and link with storage")
 		return "", ErrInternal
 	}

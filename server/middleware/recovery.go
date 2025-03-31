@@ -10,7 +10,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"runtime"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +27,7 @@ var (
 	slash     = []byte("/")
 )
 
-func Recovery(handle gin.HandlerFunc, logger logger.Logger, debugMode bool) gin.HandlerFunc {
+func Recovery(handle gin.HandlerFunc, logger logging.Logger, debugMode bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -54,6 +54,12 @@ func Recovery(handle gin.HandlerFunc, logger logger.Logger, debugMode bool) gin.
 							headers[idx] = current[0] + ": *"
 						}
 					}
+
+					errStr, isErrStr := err.(string)
+					if isErrStr {
+						err = fmt.Errorf(errStr)
+					}
+
 					headersToStr := strings.Join(headers, "\r\n")
 					if brokenPipe {
 						logger.Printf("%s\n%s%s", err, headersToStr, reset)

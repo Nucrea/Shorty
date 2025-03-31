@@ -16,10 +16,19 @@ run-dev:
 	SHORTY_LOG_FILE=".run/shorty.log" \
 	SHORTY_APP_PORT=8081 \
 	SHORTY_APP_URL=http://localhost:8081 \
+	SHORTY_APP_API_KEY=testapikey \
 	SHORTY_OPENTELEMETRY_URL="http://localhost:4318" \
 	SHORTY_POSTGRES_URL=postgres://postgres:postgres@localhost:5432/postgres \
 	SHORTY_REDIS_URL=redis://localhost:6379 \
 	go run .
+
+.PHONY: pprof
+pprof:
+	curl -XPOST http://localhost:8081/profile/start -H authorization:testapikey
+
+.PHONY: pprof-stop
+pprof-stop:
+	curl -XPOST http://localhost:8081/profile/stop -H authorization:testapikey
 
 .PHONY: pgclear
 pgclear:

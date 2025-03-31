@@ -71,6 +71,7 @@ pipeline {
                     -e SHORTY_REDIS_URL=${env.SHORTY_REDIS_URL} \
                     -e SHORTY_APP_URL=http://127.0.0.1 \
                     -e SHORTY_APP_PORT=${SHORTY_RANDOM_PORT} \
+                    -e SHORTY_APP_API_KEY=testapikey \
                     -d ${env.SHORTY_NAME}"
                 
                 sh 'sleep 1'

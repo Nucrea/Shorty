@@ -8,13 +8,11 @@ import (
 	"image/jpeg"
 	"io"
 	"shorty/src/common"
-	"shorty/src/common/assets"
 	"shorty/src/common/broker"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
+	"shorty/src/services/assets"
 
 	"github.com/anthonynsimon/bild/transform"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/minio/minio-go/v7"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -31,21 +29,21 @@ const (
 	MaxImageSize = 5 * 1024 * 1024
 )
 
-func NewService(pg *pgxpool.Pool, s3 *minio.Client, log logger.Logger, tracer trace.Tracer) *Service {
+func NewService(metaRepo MetadataRepo, assetsStorage *assets.Storage, log logging.Logger, tracer trace.Tracer) *Service {
 	return &Service{
 		log:          log.WithService("image"),
 		tracer:       tracer,
-		assetStorage: assets.NewStorage(pg, s3, tracer, log),
-		metaRepo:     newMetadataRepo(pg, tracer),
+		assetStorage: assetsStorage,
+		metaRepo:     metaRepo,
 	}
 }
 
 type Service struct {
-	log          logger.Logger
+	log          logging.Logger
 	tracer       trace.Tracer
 	broker       broker.Broker
 	assetStorage *assets.Storage
-	metaRepo     *metadataRepo
+	metaRepo     MetadataRepo
 }
 
 func (s *Service) createThumbnail(ctx context.Context, imgBytes []byte) ([]byte, error) {
@@ -174,18 +172,18 @@ func (s *Service) GetImageBytes(ctx context.Context, id string, thumbnail bool) 
 		return nil, err
 	}
 
-	assetId := meta.OriginalId
+	resourceId := meta.OriginalResourceId
 	if thumbnail {
-		assetId = meta.ThumbnailId
+		resourceId = meta.ThumbnailResourceId
 	}
 
-	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, BucketName, assetId)
+	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, BucketName, resourceId)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed getting image asset bytes from storage (id=%s, assetId=%s, thumbnail=%t)", id, assetId, thumbnail)
+		log.Error().Err(err).Msgf("failed getting image asset bytes from storage (id=%s, resourceId=%s, thumbnail=%t)", id, resourceId, thumbnail)
 		return nil, ErrInternal
 	}
 
-	log.Info().Msgf("read image asset (id=%s, assetId=%s, thumbnail=%t)", id, assetId, thumbnail)
+	log.Info().Msgf("read image asset (id=%s, resourceId=%s, thumbnail=%t)", id, resourceId, thumbnail)
 
 	return assetBytes, nil
 }

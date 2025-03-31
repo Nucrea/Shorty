@@ -4,17 +4,19 @@ import (
 	"context"
 	"fmt"
 	"shorty/server"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 	"shorty/src/common/tracing"
+	"shorty/src/databases/postgres"
+	"shorty/src/databases/redis"
+	"shorty/src/services/assets"
 	"shorty/src/services/files"
 	"shorty/src/services/guard"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -25,28 +27,32 @@ func main() {
 		panic(fmt.Errorf("error parsing environment variables: %w", err))
 	}
 
-	log, err := logger.New(conf.LogFile)
+	logger, err := logging.NewLogger(
+		logging.WithFile(conf.LogFile),
+		// logging.WithOpenTelemetry(conf.OTELUrl),
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	dbPool, err := pgxpool.New(ctx, conf.PostgresUrl)
+	tracer, err := tracing.NewTracer(conf.OTELUrl)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error connecting to postgres")
+		logger.Fatal().Err(err).Msg("error init tracer")
 	}
 
-	redisOpts, err := redis.ParseURL(conf.RedisUrl)
+	meter, err := metrics.NewOtel("shorty", conf.OTELUrl)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error parsing redis url")
+		logger.Fatal().Err(err).Msg("error init metrics")
 	}
-	rdb := redis.NewClient(redisOpts)
 
-	tracer := tracing.NewNoopTracer()
-	if conf.OTELUrl != "" {
-		tracer, err = tracing.NewTracer(conf.OTELUrl)
-		if err != nil {
-			log.Fatal().Err(err).Msg("error init tracer")
-		}
+	pgdb, err := postgres.NewPostgres(ctx, conf.PostgresUrl, tracer, meter)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("error connecting to postgres")
+	}
+
+	rdb, err := redis.New(ctx, conf.RedisUrl, tracer, meter)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("error connecting to redis")
 	}
 
 	s3, err := minio.New(conf.MinioEndpoint, &minio.Options{
@@ -54,18 +60,21 @@ func main() {
 		Secure: false,
 	})
 	if err != nil {
-		log.Fatal().Err(err).Msg("error init minio client")
+		logger.Fatal().Err(err).Msg("error init minio client")
 	}
 
-	linksService := links.NewService(dbPool, log, conf.AppUrl, tracer)
-	guardService := guard.NewService(rdb, log, tracer)
-	imageService := image.NewService(dbPool, s3, log, tracer)
-	fileService := files.NewService(dbPool, s3, log, tracer)
+	assetsStorage := assets.NewStorage(pgdb, rdb, s3, tracer, logger)
+	linksService := links.NewService(pgdb, logger, tracer, meter)
+	guardService := guard.NewService(rdb, logger, tracer)
+	imageService := image.NewService(pgdb, assetsStorage, logger, tracer)
+	fileService := files.NewService(pgdb, assetsStorage, logger, tracer)
 
 	srv := server.New(server.Opts{
 		Url:          conf.AppUrl,
-		Log:          log,
+		ApiKey:       conf.ApiKey,
+		Logger:       logger,
 		Tracer:       tracer,
+		Meter:        meter,
 		LinksService: linksService,
 		GuardService: guardService,
 		ImageService: imageService,

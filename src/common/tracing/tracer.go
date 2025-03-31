@@ -4,14 +4,16 @@ import (
 	"context"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	"go.opentelemetry.io/otel/sdk/resource"
 	traceSdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
 func NewNoopTracer() trace.Tracer {
-	return noop.NewTracerProvider().Tracer("shorty")
+	return noop.Tracer{}
 }
 
 func NewTracer(otelUrl string) (trace.Tracer, error) {
@@ -23,8 +25,17 @@ func NewTracer(otelUrl string) (trace.Tracer, error) {
 		return nil, err
 	}
 
+	r, err := resource.Merge(
+		resource.Default(),
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceName("shorty"),
+		),
+	)
+
 	tracerProvider := traceSdk.NewTracerProvider(
 		traceSdk.WithSampler(traceSdk.AlwaysSample()),
+		traceSdk.WithResource(r),
 		traceSdk.WithBatcher(
 			tracerExporter,
 			traceSdk.WithMaxQueueSize(8192),

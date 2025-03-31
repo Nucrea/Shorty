@@ -5,12 +5,10 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"shorty/src/common"
-	"shorty/src/common/logger"
+	"shorty/src/common/logging"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -23,7 +21,6 @@ var (
 	ErrNoSuchCaptcha = errors.New("no such captcha")
 
 	captchaSecret = common.NewShortId(10)
-	tokenSecret   = common.NewShortId(10)
 )
 
 const (
@@ -36,18 +33,18 @@ const (
 	CaptchaTTL = 2 * time.Minute
 )
 
-func NewService(rdb *redis.Client, log logger.Logger, tracer trace.Tracer) *Service {
+func NewService(storage Storage, log logging.Logger, tracer trace.Tracer) *Service {
 	return &Service{
 		log:     log.WithService("guard"),
 		tracer:  tracer,
-		storage: newStorage(rdb, tracer),
+		storage: storage,
 	}
 }
 
 type Service struct {
-	log     logger.Logger
+	log     logging.Logger
 	tracer  trace.Tracer
-	storage *storage
+	storage Storage
 }
 
 func (s *Service) CheckIP(ctx context.Context, ip string) error {
@@ -56,7 +53,7 @@ func (s *Service) CheckIP(ctx context.Context, ip string) error {
 	ctx, span := s.tracer.Start(ctx, "guard::CheckIP")
 	defer span.End()
 
-	banned, err := s.storage.IsBanned(ctx, ip)
+	banned, err := s.storage.IsIpBanned(ctx, ip)
 	if err != nil {
 		log.Error().Err(err).Msgf("checking banned with storage")
 		return ErrInternal
@@ -66,13 +63,13 @@ func (s *Service) CheckIP(ctx context.Context, ip string) error {
 		return ErrTemporaryBanned
 	}
 
-	rate, err := s.storage.IncRate(ctx, ip, LimitWindow)
+	rate, err := s.storage.IncIpRate(ctx, ip, LimitWindow)
 	if err != nil {
 		log.Error().Err(err).Msgf("inc requests rate with storage")
 		return ErrInternal
 	}
 	if rate >= BanAmount {
-		if err := s.storage.SetBanned(ctx, ip, BanWindow); err != nil {
+		if err := s.storage.SetIpBanned(ctx, ip, BanWindow); err != nil {
 			log.Error().Err(err).Msgf("set banned with storage")
 			return ErrInternal
 		}
@@ -124,7 +121,7 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 		return ErrInternal
 	}
 	if storedHash == "" {
-		log.Info().Msgf("no such captcha with id=%s", common.MaskSecret(id), common.MaskSecret(value))
+		log.Info().Msgf("no such captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
 		return ErrNoSuchCaptcha
 	}
 
@@ -135,18 +132,4 @@ func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
 
 	log.Info().Msgf("approved captcha, id=%s, value=%s", common.MaskSecret(id), common.MaskSecret(value))
 	return nil
-}
-
-func (s *Service) CreateResourceToken(resource string, ttl time.Duration) ExpiringToken {
-	expiresAt := time.Now().Add(ttl).UnixMicro()
-	raw := fmt.Sprintf("%s%d%s", resource, expiresAt, tokenSecret)
-	return ExpiringToken{
-		Value:   s.hashsum(raw),
-		Exipres: expiresAt,
-	}
-}
-
-func (s *Service) CheckResourceToken(resource string, expiresAt int64, token string) bool {
-	value := fmt.Sprintf("%s%d%s", resource, expiresAt, tokenSecret)
-	return s.hashsum(value) == token
 }

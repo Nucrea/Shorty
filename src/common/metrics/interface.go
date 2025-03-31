@@ -1,24 +1,22 @@
 package metrics
 
-import "net/http"
-
 type Counter interface {
 	Inc()
 }
 
 type Gauge interface {
 	Set(float64)
-	Inc()
-	Dec()
+	// Inc()
+	// Dec()
 }
 
 type Histogram interface {
 	Observe(float64)
+	ObserveWithLabel(value float64, label string)
 }
 
-type Metrics interface {
+type Meter interface {
 	NewCounter(name, description string) Counter
 	NewGauge(name, description string) Gauge
-	NewHistogram(name, description string) Histogram
-	HttpHandler() http.Handler
+	NewHistogram(name, description string, buckets []float64) Histogram
 }
