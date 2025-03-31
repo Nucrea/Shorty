@@ -33,6 +33,7 @@ pipeline {
                     -e SHORTY_REDIS_URL=${env.SHORTY_REDIS_URL} \
                     -e SHORTY_APP_URL=${env.SHORTY_APP_URL} \
                     -e SHORTY_APP_PORT=${env.SHORTY_APP_PORT} \
+                    -e SHORTY_APP_API_KEY=${env.SHORTY_APP_API_KEY} \
                     -d ${env.SHORTY_NAME}"
                 
                 sh 'sleep 1'
