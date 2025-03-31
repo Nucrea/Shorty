@@ -9,7 +9,6 @@ import (
 	"shorty/src/common/logging"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -34,18 +33,18 @@ const (
 	CaptchaTTL = 2 * time.Minute
 )
 
-func NewService(rdb *redis.Client, log logging.Logger, tracer trace.Tracer) *Service {
+func NewService(storage Storage, log logging.Logger, tracer trace.Tracer) *Service {
 	return &Service{
 		log:     log.WithService("guard"),
 		tracer:  tracer,
-		storage: newStorage(rdb, tracer),
+		storage: storage,
 	}
 }
 
 type Service struct {
 	log     logging.Logger
 	tracer  trace.Tracer
-	storage *storage
+	storage Storage
 }
 
 func (s *Service) CheckIP(ctx context.Context, ip string) error {
@@ -54,7 +53,7 @@ func (s *Service) CheckIP(ctx context.Context, ip string) error {
 	ctx, span := s.tracer.Start(ctx, "guard::CheckIP")
 	defer span.End()
 
-	banned, err := s.storage.IsBanned(ctx, ip)
+	banned, err := s.storage.IsIpBanned(ctx, ip)
 	if err != nil {
 		log.Error().Err(err).Msgf("checking banned with storage")
 		return ErrInternal
@@ -64,13 +63,13 @@ func (s *Service) CheckIP(ctx context.Context, ip string) error {
 		return ErrTemporaryBanned
 	}
 
-	rate, err := s.storage.IncRate(ctx, ip, LimitWindow)
+	rate, err := s.storage.IncIpRate(ctx, ip, LimitWindow)
 	if err != nil {
 		log.Error().Err(err).Msgf("inc requests rate with storage")
 		return ErrInternal
 	}
 	if rate >= BanAmount {
-		if err := s.storage.SetBanned(ctx, ip, BanWindow); err != nil {
+		if err := s.storage.SetIpBanned(ctx, ip, BanWindow); err != nil {
 			log.Error().Err(err).Msgf("set banned with storage")
 			return ErrInternal
 		}

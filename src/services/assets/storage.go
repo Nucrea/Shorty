@@ -7,17 +7,16 @@ import (
 	"strings"
 
 	"github.com/minio/minio-go/v7"
-	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewStorage(metaRepo MetadataRepo, s3 *minio.Client, rdb *redis.Client, tracer trace.Tracer, logger logging.Logger) *Storage {
+func NewStorage(metaRepo MetadataRepo, metaCache MetadataCache, s3 *minio.Client, tracer trace.Tracer, logger logging.Logger) *Storage {
 	return &Storage{
 		logger:    logger,
 		tracer:    tracer,
 		fileRepo:  newFileRepo(s3, tracer),
 		metaRepo:  metaRepo,
-		metaCache: &cache{rdb, tracer},
+		metaCache: metaCache,
 	}
 }
 
@@ -26,7 +25,7 @@ type Storage struct {
 	tracer    trace.Tracer
 	fileRepo  *fileRepo
 	metaRepo  MetadataRepo
-	metaCache *cache
+	metaCache MetadataCache
 }
 
 func (s *Storage) SaveAssets(ctx context.Context, bucket string, assets ...[]byte) ([]AssetMetadataDTO, error) {
@@ -77,7 +76,7 @@ func (s *Storage) SaveAssets(ctx context.Context, bucket string, assets ...[]byt
 	log.Info().Msgf("saved assets, bucket=%s, ids=%s", bucket, sb.String())
 
 	for _, meta := range metadatas {
-		if err := s.metaCache.PutMetadata(ctx, meta); err != nil {
+		if err := s.metaCache.PutAssetMetadata(ctx, meta); err != nil {
 			s.logger.Warning().Err(err).Msg("failed putting metadata to cache")
 		}
 	}
@@ -86,7 +85,7 @@ func (s *Storage) SaveAssets(ctx context.Context, bucket string, assets ...[]byt
 }
 
 func (s *Storage) getAssetMetadata(ctx context.Context, id string) (*AssetMetadataDTO, error) {
-	if meta, err := s.metaCache.GetMetadata(ctx, id); err == nil && meta != nil {
+	if meta, err := s.metaCache.GetAssetMetadata(ctx, id); err == nil && meta != nil {
 		return meta, nil
 	}
 
@@ -98,7 +97,7 @@ func (s *Storage) getAssetMetadata(ctx context.Context, id string) (*AssetMetada
 		return nil, nil
 	}
 
-	if err := s.metaCache.PutMetadata(ctx, *meta); err != nil {
+	if err := s.metaCache.PutAssetMetadata(ctx, *meta); err != nil {
 		s.logger.Warning().Err(err).Msg("failed putting metadata to cache")
 	}
 	return meta, nil

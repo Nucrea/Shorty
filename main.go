@@ -8,6 +8,7 @@ import (
 	"shorty/src/common/metrics"
 	"shorty/src/common/tracing"
 	"shorty/src/databases/postgres"
+	"shorty/src/databases/redis"
 	"shorty/src/services/assets"
 	"shorty/src/services/files"
 	"shorty/src/services/guard"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -45,16 +45,15 @@ func main() {
 		logger.Fatal().Err(err).Msg("error init metrics")
 	}
 
-	pgdb, err := postgres.NewPostgres(ctx, conf.PostgresUrl, logger, tracer, meter)
+	pgdb, err := postgres.NewPostgres(ctx, conf.PostgresUrl, tracer, meter)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("error connecting to postgres")
 	}
 
-	redisOpts, err := redis.ParseURL(conf.RedisUrl)
+	rdb, err := redis.New(ctx, conf.RedisUrl, tracer, meter)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("error parsing redis url")
+		logger.Fatal().Err(err).Msg("error connecting to redis")
 	}
-	rdb := redis.NewClient(redisOpts)
 
 	s3, err := minio.New(conf.MinioEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(conf.MinioAccessKey, conf.MinioAccessSecret, ""),
@@ -64,7 +63,7 @@ func main() {
 		logger.Fatal().Err(err).Msg("error init minio client")
 	}
 
-	assetsStorage := assets.NewStorage(pgdb, s3, rdb, tracer, logger)
+	assetsStorage := assets.NewStorage(pgdb, rdb, s3, tracer, logger)
 	linksService := links.NewService(pgdb, logger, tracer, meter)
 	guardService := guard.NewService(rdb, logger, tracer)
 	imageService := image.NewService(pgdb, assetsStorage, logger, tracer)

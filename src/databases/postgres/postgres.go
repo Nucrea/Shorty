@@ -15,7 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewPostgres(ctx context.Context, connUrl string, logger logging.Logger, tracer trace.Tracer, meter metrics.Meter) (*Postgres, error) {
+func NewPostgres(ctx context.Context, connUrl string, tracer trace.Tracer, meter metrics.Meter) (*Postgres, error) {
 	dbPool, err := pgxpool.New(ctx, connUrl)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,6 @@ func NewPostgres(ctx context.Context, connUrl string, logger logging.Logger, tra
 	return &Postgres{
 		db:     dbPool,
 		tracer: tracer,
-		logger: logger,
 		meter:  meter,
 		latencyHist: meter.NewHistogram(
 			"postgres_query_latency",
