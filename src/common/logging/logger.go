@@ -58,6 +58,10 @@ func (l logger) Info() Event {
 	return l.wrapEvent(l.zeroLogger.Info())
 }
 
+func (l logger) Debug() Event {
+	return l.wrapEvent(l.zeroLogger.Debug())
+}
+
 func (l logger) Warning() Event {
 	return l.wrapEvent(l.zeroLogger.Warn())
 }

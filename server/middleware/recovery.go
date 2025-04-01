@@ -11,6 +11,7 @@ import (
 	"os"
 	"runtime"
 	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -27,10 +28,12 @@ var (
 	slash     = []byte("/")
 )
 
-func Recovery(handle gin.HandlerFunc, logger logging.Logger, debugMode bool) gin.HandlerFunc {
+func Recovery(handle gin.HandlerFunc, logger logging.Logger, meter metrics.Meter, debugMode bool) gin.HandlerFunc {
+	panicsCounter := meter.NewCounter("http_requests_panics", "Count of panics during request handling")
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
+				panicsCounter.Inc()
 				// Check for a broken connection, as it is not really a
 				// condition that warrants a panic stack trace.
 				var brokenPipe bool

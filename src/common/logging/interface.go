@@ -8,6 +8,7 @@ import (
 type Logger interface {
 	Log() Event
 	Info() Event
+	Debug() Event
 	Warning() Event
 	Error() Event
 	Fatal() Event

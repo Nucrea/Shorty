@@ -68,7 +68,7 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.ContextWithFallback = true // allows getting values from gin ctx, needed for tracing
 
 	server.NoRoute(s.pages.NotFound)
-	server.Use(middleware.Recovery(s.pages.InternalError, s.Logger, true))
+	server.Use(middleware.Recovery(s.pages.InternalError, s.Logger, s.Meter, true))
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
