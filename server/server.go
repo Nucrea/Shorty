@@ -15,6 +15,7 @@ import (
 	"shorty/src/services/guard"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
+	"sync"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -39,12 +40,20 @@ type Opts struct {
 
 func New(opts Opts) *server {
 	opts.Logger = opts.Logger.WithService("server")
-	return &server{opts, &pages.Site{}}
+	return &server{
+		opts,
+		&pages.Site{},
+		&profiler{
+			mutex:        &sync.Mutex{},
+			statusMetric: opts.Meter.NewGauge("profile_enabled", "Status flag of profiling mode (1-enabled, 0-disabled)"),
+		},
+	}
 }
 
 type server struct {
 	Opts
-	pages *pages.Site
+	pages    *pages.Site
+	profiler *profiler
 }
 
 func (s *server) Run(ctx context.Context, port uint16) {

@@ -71,11 +71,11 @@ func main() {
 		logger.Fatal().Err(err).Msg("error init minio client")
 	}
 
-	assetsStorage := assets.NewStorage(pgdb, rdb, s3, tracer, logger)
+	assetsStorage := assets.NewStorage(pgdb, rdb, s3, logger, tracer)
 	linksService := links.NewService(pgdb, logger, tracer, meter)
-	guardService := guard.NewService(rdb, logger, tracer)
-	imageService := image.NewService(pgdb, assetsStorage, logger, tracer)
-	fileService := files.NewService(pgdb, assetsStorage, logger, tracer)
+	guardService := guard.NewService(rdb, logger, tracer, meter)
+	imageService := image.NewService(pgdb, assetsStorage, logger, tracer, meter)
+	fileService := files.NewService(pgdb, assetsStorage, logger, tracer, meter)
 
 	srv := server.New(server.Opts{
 		Url:          conf.AppUrl,

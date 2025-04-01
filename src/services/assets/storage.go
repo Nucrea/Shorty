@@ -10,9 +10,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewStorage(metaRepo MetadataRepo, metaCache MetadataCache, s3 *minio.Client, tracer trace.Tracer, logger logging.Logger) *Storage {
+func NewStorage(metaRepo MetadataRepo, metaCache MetadataCache, s3 *minio.Client, logger logging.Logger, tracer trace.Tracer) *Storage {
 	return &Storage{
-		logger:    logger,
+		logger:    logger.WithService("assets"),
 		tracer:    tracer,
 		fileRepo:  newFileRepo(s3, tracer),
 		metaRepo:  metaRepo,
@@ -29,7 +29,7 @@ type Storage struct {
 }
 
 func (s *Storage) SaveAssets(ctx context.Context, bucket string, assets ...[]byte) ([]AssetMetadataDTO, error) {
-	log := s.logger.WithContext(ctx).WithService("assets")
+	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "assets::SaveAssets")
 	defer span.End()
@@ -104,7 +104,7 @@ func (s *Storage) getAssetMetadata(ctx context.Context, id string) (*AssetMetada
 }
 
 func (s *Storage) GetAssetBytes(ctx context.Context, bucket, id string) ([]byte, error) {
-	log := s.logger.WithContext(ctx).WithService("assets")
+	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "assets::GetAssetBytes")
 	defer span.End()

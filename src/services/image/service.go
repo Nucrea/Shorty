@@ -10,6 +10,7 @@ import (
 	"shorty/src/common"
 	"shorty/src/common/broker"
 	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 	"shorty/src/services/assets"
 
 	"github.com/anthonynsimon/bild/transform"
@@ -29,12 +30,16 @@ const (
 	MaxImageSize = 5 * 1024 * 1024
 )
 
-func NewService(metaRepo MetadataRepo, assetsStorage *assets.Storage, log logging.Logger, tracer trace.Tracer) *Service {
+func NewService(metaRepo MetadataRepo, assetsStorage *assets.Storage, log logging.Logger, tracer trace.Tracer, meter metrics.Meter) *Service {
 	return &Service{
-		log:          log.WithService("image"),
-		tracer:       tracer,
-		assetStorage: assetsStorage,
-		metaRepo:     metaRepo,
+		log:                   log.WithService("images"),
+		tracer:                tracer,
+		assetStorage:          assetsStorage,
+		metaRepo:              metaRepo,
+		uploadsCounter:        meter.NewCounter("images_uploads", "Count of uploaded images"),
+		dulicatesCounter:      meter.NewCounter("images_duplicates", "Count of uploaded duplicates"),
+		origDownloadsCounter:  meter.NewCounter("images_orig_downloads", "How many times original image was downloaded"),
+		thumbDownloadsCounter: meter.NewCounter("images_thumb_downloads", "How many times thumbnail of image was downloaded"),
 	}
 }
 
@@ -44,10 +49,15 @@ type Service struct {
 	broker       broker.Broker
 	assetStorage *assets.Storage
 	metaRepo     MetadataRepo
+
+	uploadsCounter        metrics.Counter
+	dulicatesCounter      metrics.Counter
+	origDownloadsCounter  metrics.Counter
+	thumbDownloadsCounter metrics.Counter
 }
 
 func (s *Service) createThumbnail(ctx context.Context, imgBytes []byte) ([]byte, error) {
-	log := s.log.WithContext(ctx).WithService("image")
+	log := s.log.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "image::createThumbnail")
 	defer span.End()
@@ -84,7 +94,7 @@ func (s *Service) createThumbnail(ctx context.Context, imgBytes []byte) ([]byte,
 }
 
 func (s *Service) UploadImage(ctx context.Context, name string, imageBytes []byte) (*ImageMetadataDTO, error) {
-	log := s.log.WithContext(ctx).WithService("image")
+	log := s.log.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "image::UploadImage")
 	defer span.End()
@@ -109,6 +119,7 @@ func (s *Service) UploadImage(ctx context.Context, name string, imageBytes []byt
 
 	if info != nil {
 		log.Info().Msg("found existing files with same hash, add reference to them")
+		s.dulicatesCounter.Inc()
 		metadata.OriginalId = info.OriginalId
 		metadata.ThumbnailId = info.ThumbnailId
 	} else {
@@ -136,12 +147,13 @@ func (s *Service) UploadImage(ctx context.Context, name string, imageBytes []byt
 	}
 
 	log.Info().Msgf("created image with id=%s", metadata.Id)
+	s.uploadsCounter.Inc()
 
 	return &metadata, nil
 }
 
 func (s *Service) GetImageMetadata(ctx context.Context, id string) (*ImageMetadataExDTO, error) {
-	log := s.log.WithContext(ctx).WithService("image")
+	log := s.log.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "image::GetImageMetadata")
 	defer span.End()
@@ -162,7 +174,7 @@ func (s *Service) GetImageMetadata(ctx context.Context, id string) (*ImageMetada
 }
 
 func (s *Service) GetImageBytes(ctx context.Context, id string, thumbnail bool) ([]byte, error) {
-	log := s.log.WithContext(ctx).WithService("image")
+	log := s.log.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "image::GetImageBytes")
 	defer span.End()
@@ -184,6 +196,11 @@ func (s *Service) GetImageBytes(ctx context.Context, id string, thumbnail bool) 
 	}
 
 	log.Info().Msgf("read image asset (id=%s, resourceId=%s, thumbnail=%t)", id, resourceId, thumbnail)
+	if thumbnail {
+		s.thumbDownloadsCounter.Inc()
+	} else {
+		s.origDownloadsCounter.Inc()
+	}
 
 	return assetBytes, nil
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"shorty/src/common"
 	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
@@ -33,22 +34,25 @@ const (
 	CaptchaTTL = 2 * time.Minute
 )
 
-func NewService(storage Storage, log logging.Logger, tracer trace.Tracer) *Service {
+func NewService(storage Storage, logger logging.Logger, tracer trace.Tracer, meter metrics.Meter) *Service {
 	return &Service{
-		log:     log.WithService("guard"),
-		tracer:  tracer,
-		storage: storage,
+		logger:        logger.WithService("guard"),
+		tracer:        tracer,
+		storage:       storage,
+		bannedCounter: meter.NewCounter("guard_banned", "Count of banned ip"),
 	}
 }
 
 type Service struct {
-	log     logging.Logger
+	logger  logging.Logger
 	tracer  trace.Tracer
 	storage Storage
+
+	bannedCounter metrics.Counter
 }
 
 func (s *Service) CheckIP(ctx context.Context, ip string) error {
-	log := s.log.WithContext(ctx).WithService("guard")
+	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "guard::CheckIP")
 	defer span.End()
@@ -71,6 +75,7 @@ func (s *Service) CheckIP(ctx context.Context, ip string) error {
 	if rate >= BanAmount {
 		if err := s.storage.SetIpBanned(ctx, ip, BanWindow); err != nil {
 			log.Error().Err(err).Msgf("set banned with storage")
+			s.bannedCounter.Inc()
 			return ErrInternal
 		}
 
@@ -91,7 +96,7 @@ func (s *Service) hashsum(value string) string {
 }
 
 func (s *Service) CreateCaptcha(ctx context.Context) (*CaptchaDTO, error) {
-	log := s.log.WithContext(ctx).WithService("guard")
+	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "guard::CreateCaptcha")
 	defer span.End()
@@ -110,7 +115,7 @@ func (s *Service) CreateCaptcha(ctx context.Context) (*CaptchaDTO, error) {
 }
 
 func (s *Service) CheckCaptcha(ctx context.Context, id, value string) error {
-	log := s.log.WithContext(ctx).WithService("guard")
+	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "guard::CheckCaptcha")
 	defer span.End()

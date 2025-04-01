@@ -19,9 +19,11 @@ var (
 
 func NewService(storage Storage, logger logging.Logger, tracer trace.Tracer, meter metrics.Meter) *Service {
 	return &Service{
-		logger:  logger.WithService("links"),
-		tracer:  tracer,
-		storage: storage,
+		logger:          logger.WithService("links"),
+		tracer:          tracer,
+		storage:         storage,
+		createdCounter:  meter.NewCounter("links_created", "Created links counter"),
+		resolvedCounter: meter.NewCounter("links_resolved", "Resolved links counter"),
 	}
 }
 
@@ -29,6 +31,9 @@ type Service struct {
 	logger  logging.Logger
 	tracer  trace.Tracer
 	storage Storage
+
+	createdCounter  metrics.Counter
+	resolvedCounter metrics.Counter
 }
 
 func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, error) {
@@ -52,6 +57,7 @@ func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, erro
 	}
 
 	log.Info().Msgf("got link with id=%s from storage", linkId)
+	s.resolvedCounter.Inc()
 
 	return link, nil
 }
@@ -75,6 +81,7 @@ func (s *Service) Create(ctx context.Context, url string) (string, error) {
 	}
 
 	log.Info().Msgf("created shortlink with id=%s", id)
+	s.createdCounter.Inc()
 
 	return id, nil
 }

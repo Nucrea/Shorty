@@ -44,9 +44,8 @@ type redisDb struct {
 
 func (r *redisDb) observe(ctx context.Context, funcName string) func() {
 	_, span := r.tracer.Start(ctx, fmt.Sprintf("redis::%s", funcName))
-	defer span.End()
-
 	start := time.Now()
+
 	return func() {
 		span.End()
 		duration := time.Now().Sub(start).Milliseconds()

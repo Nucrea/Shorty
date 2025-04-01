@@ -6,6 +6,7 @@ import (
 	"shorty/src/common"
 	"shorty/src/common/broker"
 	"shorty/src/common/logging"
+	"shorty/src/common/metrics"
 	"shorty/src/services/assets"
 
 	"go.opentelemetry.io/otel/trace"
@@ -22,12 +23,14 @@ const (
 	MaxSize    = 20 * 1024 * 1024
 )
 
-func NewService(metaRepo MetadataRepo, assetsStorage *assets.Storage, log logging.Logger, tracer trace.Tracer) *Service {
+func NewService(metaRepo MetadataRepo, assetsStorage *assets.Storage, log logging.Logger, tracer trace.Tracer, meter metrics.Meter) *Service {
 	return &Service{
-		log:          log.WithService("files"),
-		tracer:       tracer,
-		assetStorage: assetsStorage,
-		metaRepo:     metaRepo,
+		log:              log.WithService("files"),
+		tracer:           tracer,
+		assetStorage:     assetsStorage,
+		metaRepo:         metaRepo,
+		uploadsCounter:   meter.NewCounter("files_uploads", "Count of file uploads"),
+		downloadsCounter: meter.NewCounter("files_downloads", "Count of file downloads"),
 	}
 }
 
@@ -37,6 +40,9 @@ type Service struct {
 	broker       broker.Broker
 	assetStorage *assets.Storage
 	metaRepo     MetadataRepo
+
+	uploadsCounter   metrics.Counter
+	downloadsCounter metrics.Counter
 }
 
 func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte) (*FileMetadataDTO, error) {
@@ -66,6 +72,7 @@ func (s *Service) UploadFile(ctx context.Context, name string, fileBytes []byte)
 	}
 
 	log.Info().Msgf("saved file with id=%s", metadata.Id)
+	s.uploadsCounter.Inc()
 
 	return metadata, nil
 }
@@ -109,6 +116,7 @@ func (s *Service) GetFileBytes(ctx context.Context, id string) ([]byte, error) {
 	}
 
 	log.Info().Msgf("read file bytes, id=%s", meta.Id)
+	s.downloadsCounter.Inc()
 
 	return assetBytes, nil
 }

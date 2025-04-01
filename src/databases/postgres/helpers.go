@@ -10,9 +10,8 @@ import (
 
 func observe(ctx context.Context, p *Postgres, funcName string) func() {
 	_, span := p.tracer.Start(ctx, fmt.Sprintf("postgres::%s", funcName))
-	defer span.End()
-
 	start := time.Now()
+
 	return func() {
 		span.End()
 		duration := time.Now().Sub(start).Milliseconds()
