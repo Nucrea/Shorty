@@ -24,7 +24,7 @@ func NewLogger(opts ...Option) (Logger, error) {
 			return nil, err
 		}
 
-		writer = io.MultiWriter(os.Stdout, file)
+		writer = zerolog.MultiLevelWriter(os.Stdout, file)
 	}
 
 	// otel := newOtelNoop()
