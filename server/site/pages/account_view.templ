@@ -1,10 +1,58 @@
 package pages
 
-templ AccountView() {
+type AccountViewUser struct {
+    Email string
+}
+
+type AccountViewLink struct {
+    SourceUrl string
+    DestinationUrl string
+    QRBase64 string
+}
+
+type AccountViewImage struct {
+	FileName     string
+	SizeMB       float32
+    ViewUrl      string
+	ThumbnailUrl string
+}
+
+type AccountViewFile struct {
+	FileName     string
+    ViewUrl      string
+	SizeMB       float32
+}
+
+type AccountViewParams struct {
+    AccountViewUser
+    Links []AccountViewLink
+    Images []AccountViewImage
+    Files []AccountViewFile
+}
+
+templ AccountView(p AccountViewParams) {
     @layout(){
     <div class="flex flex-col bg-white rounded-md overflow-hidden shadow-xl w-[350px]">
         <p>My Links:</p>
+        for _, link := range p.Links {
+            <div class="flex flex-row justify-between">
+                <div class="flex flex-col bg-white rounded-md shadow-lg overflow-hidden">
+                    <p class="flex flex-row">{ link.SourceUrl }</p>
+                    <p class="flex flex-row">{ link.DestinationUrl }</p>
+                </div>
+                <img class="rounded-md ml-2 p-1 border-2 border-solid border-gray-200 hover:border-sky-800 w-[48px] h-[48px] cursor-pointer" src={ jpegBase64Src(link.QRBase64) } alt="QRCode"/>
+            </div>
+        }
         <p>My Images:</p>
+        for _, image := range p.Images {
+            <div class="flex flex-row justify-between">
+                <div class="flex flex-col bg-white rounded-md shadow-lg overflow-hidden">
+                    <p class="flex flex-row">{ image.FileName }</p>
+                    <p class="flex flex-row">{ image.ViewUrl }</p>
+                </div>
+                <img class="w-[64px] h-[64px]" src={ image.ThumbnailUrl } alt="Thumbnail"/>
+            </div>
+        }
         <p>My Files:</p>
     </div> 
     }

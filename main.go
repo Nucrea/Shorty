@@ -15,6 +15,7 @@ import (
 	"shorty/src/services/guard"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
+	"shorty/src/services/users"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -53,7 +54,7 @@ func main() {
 		logger.Fatal().Err(err).Msg("error init metrics")
 	}
 
-	pgdb, err := postgres.NewPostgres(ctx, conf.PostgresUrl, tracer, meter)
+	pgdb, err := postgres.NewPostgres(ctx, conf.PostgresUrl, logger, tracer, meter)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("error connecting to postgres")
 	}
@@ -76,6 +77,7 @@ func main() {
 	guardService := guard.NewService(rdb, logger, tracer, meter)
 	imageService := image.NewService(pgdb, assetsStorage, logger, tracer, meter)
 	fileService := files.NewService(pgdb, assetsStorage, logger, tracer, meter)
+	userService := users.NewService(pgdb, rdb, logger, tracer, meter)
 
 	srv := server.New(server.Opts{
 		Url:          conf.AppUrl,
@@ -87,6 +89,7 @@ func main() {
 		GuardService: guardService,
 		ImageService: imageService,
 		FileService:  fileService,
+		UserService:  userService,
 	})
 	srv.Run(ctx, conf.AppPort)
 }

@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"shorty/src/common/metrics"
 	"shorty/src/services/assets"
+	"shorty/src/services/users"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel/trace"
 )
+
+var _ users.SessionRepo = (*redisDb)(nil)
 
 func New(ctx context.Context, redisUrl string, tracer trace.Tracer, meter metrics.Meter) (*redisDb, error) {
 	redisOpts, err := redis.ParseURL(redisUrl)
@@ -51,6 +54,24 @@ func (r *redisDb) observe(ctx context.Context, funcName string) func() {
 		duration := time.Now().Sub(start).Milliseconds()
 		r.latencyHist.ObserveWithLabel(float64(duration), funcName)
 	}
+}
+
+func (r *redisDb) GetSession(ctx context.Context, key string) (*users.SessionDTO, error) {
+	defer r.observe(ctx, "GetSession")()
+
+	newKey := fmt.Sprintf("session:%s", key)
+	result, err := r.rdb.Get(ctx, newKey).Result()
+	if err != nil {
+		return nil, err
+	}
+	return &users.SessionDTO{UserId: result}, nil
+}
+
+func (r *redisDb) PutSession(ctx context.Context, key string, session users.SessionDTO, timeout time.Duration) error {
+	defer r.observe(ctx, "PutSession")()
+
+	newKey := fmt.Sprintf("session:%s", key)
+	return r.rdb.SetEx(ctx, newKey, session.UserId, timeout).Err()
 }
 
 func (r *redisDb) IncIpRate(ctx context.Context, ip string, window time.Duration) (int, error) {

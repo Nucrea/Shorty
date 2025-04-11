@@ -15,6 +15,7 @@ import (
 	"shorty/src/services/guard"
 	"shorty/src/services/image"
 	"shorty/src/services/links"
+	"shorty/src/services/users"
 	"sync"
 	"time"
 
@@ -36,6 +37,7 @@ type Opts struct {
 	GuardService *guard.Service
 	ImageService *image.Service
 	FileService  *files.Service
+	UserService  *users.Service
 }
 
 func New(opts Opts) *server {
@@ -119,6 +121,12 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.GET("/file/view/:id", s.FileView)
 	server.GET("/file/download/:id", s.FileDownload)
 	server.GET("/f/:id/:name", s.FileResolve)
+
+	server.GET("/login", s.site.)
+	server.GET("/register", s.pages.RegisterForm)
+	server.GET("/account", s.UserAccount)
+	server.POST("/user/login", s.UserLogin)
+	server.POST("/user/create", s.UserRegister)
 
 	s.Logger.Info().Msgf("Started server on port %d", port)
 	server.Run(fmt.Sprintf(":%d", port))

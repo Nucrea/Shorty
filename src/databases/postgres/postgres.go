@@ -8,6 +8,8 @@ import (
 	"shorty/src/services/assets"
 	"shorty/src/services/files"
 	"shorty/src/services/image"
+	"shorty/src/services/links"
+	"shorty/src/services/users"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -15,13 +17,23 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewPostgres(ctx context.Context, connUrl string, tracer trace.Tracer, meter metrics.Meter) (*Postgres, error) {
+var _ users.UserRepo = (*Postgres)(nil)
+var _ assets.MetadataRepo = (*Postgres)(nil)
+var _ image.MetadataRepo = (*Postgres)(nil)
+var _ files.MetadataRepo = (*Postgres)(nil)
+var _ links.Storage = (*Postgres)(nil)
+
+func NewPostgres(
+	ctx context.Context, connUrl string,
+	logger logging.Logger, tracer trace.Tracer, meter metrics.Meter,
+) (*Postgres, error) {
 	dbPool, err := pgxpool.New(ctx, connUrl)
 	if err != nil {
 		return nil, err
 	}
 	return &Postgres{
 		db:     dbPool,
+		logger: logger,
 		tracer: tracer,
 		meter:  meter,
 		latencyHist: meter.NewHistogram(
@@ -39,6 +51,41 @@ type Postgres struct {
 
 	db          *pgxpool.Pool
 	latencyHist metrics.Histogram
+}
+
+func (p *Postgres) CreateUser(ctx context.Context, user users.UserDTO) (*users.UserDTO, error) {
+	scanFunc := func(row pgx.Row) (*users.UserDTO, error) {
+		r := &users.UserDTO{Email: user.Email, Secret: user.Secret}
+		return r, row.Scan(&r.Id)
+	}
+
+	query := `INSERT INTO users (email, secret) VALUES ($1, $2) RETURNING id;`
+	return queryRow(ctx, p, "CreateUser", scanFunc, query, user.Email, user.Secret)
+}
+
+func (p *Postgres) GetUserByEmail(ctx context.Context, email string) (*users.UserDTO, error) {
+	scanFunc := func(row pgx.Row) (*users.UserDTO, error) {
+		r := &users.UserDTO{Email: email}
+		return r, row.Scan(&r.Id, &r.Secret, &r.Verified)
+	}
+
+	query := `SELECT id, secret, verified FROM users WHERE email=$1;`
+	return queryRow(ctx, p, "GetUserByEmail", scanFunc, query, email)
+}
+
+func (p *Postgres) GetUserById(ctx context.Context, id string) (*users.UserDTO, error) {
+	scanFunc := func(row pgx.Row) (*users.UserDTO, error) {
+		r := &users.UserDTO{Id: id}
+		return r, row.Scan(&r.Email, &r.Secret, &r.Verified)
+	}
+
+	query := `SELECT email, secret, verified FROM users WHERE id=$1;`
+	return queryRow(ctx, p, "GetUserById", scanFunc, query, id)
+}
+
+func (p *Postgres) SetUserVerified(ctx context.Context, id string) error {
+	query := `UPDATE users SET verified=true WHERE id=$1;`
+	return exec(ctx, p, "SaveImageMetadata", query, id)
 }
 
 func (p *Postgres) SaveImageMetadata(ctx context.Context, meta image.ImageMetadataDTO) error {
