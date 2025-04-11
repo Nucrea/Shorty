@@ -1,6 +1,7 @@
 create table if not exists images (
     id char(32) primary key,
-    original_id char(32)references assets(id) not null,
+    user_id int references users(id) default null,
+    original_id char(32) references assets(id) not null,
     thumbnail_id char(32) references assets(id) not null,
     name varchar(256) not null,
     -- read_count integer not null default 0,
@@ -10,6 +11,7 @@ create table if not exists images (
 
 create table if not exists files (
     id char(32) primary key,
+    user_id int references users(id) default null, 
     file_id char(32) references assets(id) not null,
     name varchar(256) not null,
     -- read_count integer not null default 0,

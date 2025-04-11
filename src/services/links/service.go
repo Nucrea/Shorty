@@ -36,33 +36,36 @@ type Service struct {
 	resolvedCounter metrics.Counter
 }
 
-func (s *Service) GetByShortId(ctx context.Context, linkId string) (string, error) {
+func (s *Service) GetById(ctx context.Context, linkId string) (*LinkDTO, error) {
 	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "links::GetByShortId")
 	defer span.End()
 
 	if !common.ValidateShortId(linkId) {
-		return "", ErrBadShortId
+		return nil, ErrBadShortId
 	}
 
 	link, err := s.storage.GetShortlink(ctx, linkId)
 	if err != nil {
 		log.Error().Err(err).Msgf("getting link with id=%s from storage", linkId)
-		return "", ErrInternal
+		return nil, ErrInternal
 	}
 	if link == "" {
 		log.Info().Msgf("no such link with id=%s", linkId)
-		return "", ErrNoSuchLink
+		return nil, ErrNoSuchLink
 	}
 
 	log.Info().Msgf("got link with id=%s from storage", linkId)
 	s.resolvedCounter.Inc()
 
-	return link, nil
+	return &LinkDTO{
+		Id:  linkId,
+		Url: link,
+	}, nil
 }
 
-func (s *Service) Create(ctx context.Context, url string) (string, error) {
+func (s *Service) Create(ctx context.Context, url string) (*LinkDTO, error) {
 	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "links::CreateShortlink")
@@ -71,17 +74,20 @@ func (s *Service) Create(ctx context.Context, url string) (string, error) {
 	url = common.ValidateUrl(url)
 	if url == "" {
 		log.Info().Msgf("invalid input url %s", url)
-		return "", ErrBadUrl
+		return nil, ErrBadUrl
 	}
 
 	id := common.NewShortId(10)
 	if err := s.storage.SaveShortlink(ctx, id, url); err != nil {
 		log.Error().Err(err).Msgf("creating qr and link with storage")
-		return "", ErrInternal
+		return nil, ErrInternal
 	}
 
 	log.Info().Msgf("created shortlink with id=%s", id)
 	s.createdCounter.Inc()
 
-	return id, nil
+	return &LinkDTO{
+		Id:  id,
+		Url: url,
+	}, nil
 }

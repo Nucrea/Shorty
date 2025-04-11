@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net/url"
 	"shorty/src/services/users"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,9 @@ func (s *server) UserRegister(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("sessionId", session.Token, 3600, "/", s.Url, false, true)
+	u, _ := url.Parse(s.Url)
+	hostname := u.Hostname()
+
+	c.SetCookie(sessionCookieKey, session.Token, 3600, "/", hostname, false, true)
 	c.Redirect(302, "/account")
 }

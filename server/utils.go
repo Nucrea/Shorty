@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const sessionCookieKey = "sessionId"
+
 var resourceTokenSecret = common.NewShortId(10)
 
 type ExpiringToken struct {

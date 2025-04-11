@@ -14,7 +14,7 @@ func (s *server) LinkResolve(c *gin.Context) {
 		return
 	}
 
-	url, err := s.LinksService.GetByShortId(c, id)
+	link, err := s.LinksService.GetById(c, id)
 	if err == links.ErrNoSuchLink || err == links.ErrBadShortId {
 		s.site.NotFound(c)
 		return
@@ -24,10 +24,10 @@ func (s *server) LinkResolve(c *gin.Context) {
 		s.site.InternalError(c)
 		return
 	}
-	if url == "" {
-		s.site.NotFound(c)
+	if link == nil {
+		s.pages.NotFound(c)
 		return
 	}
 
-	c.Redirect(302, url)
+	c.Redirect(302, link.Url)
 }

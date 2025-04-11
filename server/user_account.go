@@ -5,7 +5,7 @@ import (
 )
 
 func (s *server) UserAccount(c *gin.Context) {
-	sessionId, err := c.Cookie("sessionId")
+	sessionId, err := c.Cookie(sessionCookieKey)
 	if err != nil {
 		c.Redirect(302, "login")
 		return

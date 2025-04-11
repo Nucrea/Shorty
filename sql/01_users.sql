@@ -1,4 +1,4 @@
-create table if not exists users(
+create table if not exists users (
     id int primary key generated always as identity,
     email varchar(256) unique not null,
     secret varchar(256) not null,
