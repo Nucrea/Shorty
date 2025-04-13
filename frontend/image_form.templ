@@ -1,0 +1,36 @@
+package frontend
+
+templ ImageForm(id, imageBase64 string) {
+    @layout() {
+    <script>
+        window.addEventListener("load", function(){
+            const urlParams = new URLSearchParams(window.location.search);
+            const err = urlParams.get('err');
+            if (err && err !== "") {
+                $("#uploadbox").notify(err,
+                        { position:"bottom left", autoHideDelay: 5000, className: "error" });
+            }
+        });
+    </script>
+    <div class="flex flex-col bg-white rounded-md overflow-hidden shadow-xl w-[350px]">
+        <div class="flex w-full bg-gradient-to-t from-sky-700 via-sky-800 to-sky-700">
+            <p class="text-white ml-2 text-sm">Image</p>
+        </div>
+        <form action="/image" method="POST" enctype="multipart/form-data">
+            <div class="bg-white rounded-md p-4">
+                <input type="hidden" name="id" value={ id }>
+                <input type="file" name="image" accept="image/jpeg" class="rounded-md mb-2 border-2 border-solid border-gray-400" required>
+                <div class="flex flex-row justify-between items-start">
+                    <button id="uploadbox" class="flex p-1 pl-2 pr-2 text-center text-white rounded-md shadow-sm bg-sky-800 active:bg-sky-600 hover:bg-sky-700 transition-all">Upload image</button>
+                    <div class="flex flex-row rounded-md border border-gray-300">
+                        <img class="w-24 h-12 border-r border-gray-300" src={ jpegBase64Src(imageBase64) } alt="token">
+                        <input type="text" inputmode="numeric" placeholder="Captcha..." name="token" class="w-20 h-12 text-center" required>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <hr align="center" class="mt-1 w-full" size="2" color="#000000"/>
+        <p class="p-1">5MB max, jpeg only</p>
+    </div>
+    }
+}

@@ -1,0 +1,13 @@
+package frontend
+
+import "strconv"
+
+templ ErrorPage(statusCode int, message string) {
+    @layout(){
+    <div class="flex flex-col items-center">
+        <p class="text-white font-bold text-9xl text-center">{ strconv.Itoa(statusCode) }</p>
+        <br/>
+        <p class="text-white font-bold text-4xl text-center">{ message }</p>
+    </div>
+    }
+}

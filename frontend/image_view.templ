@@ -1,0 +1,38 @@
+package frontend
+
+import "fmt"
+
+type ImageViewParams struct {
+    ViewUrl string
+    ImageUrl string
+    ThumbnailUrl string
+    FileName string
+    SizeMB float32
+}
+
+func bbCode(p ImageViewParams) string {
+    return fmt.Sprintf("[URL=%s][IMG]%s[/IMG][/URL]", templ.URL(p.ViewUrl), templ.URL(p.ThumbnailUrl))
+}
+
+templ ImageView(p ImageViewParams) {
+    @layout(){
+    <div class="bg-white rounded-md shadow-lg p-4">
+        <div class="flex flex-row justify-between items-start w-full">
+            <div class="flex flex-col">
+                <p class="mb-1 text-md">{ p.FileName }</p>
+                <p class="mb-2 text-sm">{ fmt.Sprintf("%.2f MB", p.SizeMB) }</p>
+            </div>
+            <button onclick="alert('Not implemented')" class="p-1 rounded-md text-white font-bold bg-red-600 hover:bg-red-400 active:bg-red-500">Report</button>
+        </div>
+        <hr align="center" class="mt-1 w-full" size="2" color="#000000"/>
+        <a href={ templ.URL(p.ImageUrl) } target="_self">
+            <img class="rounded-md w-auto h-[50vh]" src={ string(templ.URL(p.ImageUrl)) } alt={ p.FileName  }/>
+        </a>
+        <hr align="center" class="mb-1 w-full" size="2" color="#000000"/>
+        <p>URL:</p>
+        <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">{ string(templ.URL(p.ViewUrl)) }</textarea>
+        <p class="mt-1">BB-Code:</p>
+        <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">{ bbCode(p) }</textarea>
+    </div>
+    }
+}
