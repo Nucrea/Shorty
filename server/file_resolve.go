@@ -14,7 +14,7 @@ import (
 func (s *server) FileResolve(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 
@@ -33,11 +33,11 @@ func (s *server) FileResolve(c *gin.Context) {
 
 	fileBytes, err := s.FileService.GetFileBytes(c, id)
 	if err == files.ErrNotFound {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 	if err != nil {
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 

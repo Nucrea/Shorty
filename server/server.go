@@ -7,7 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"shorty/server/middleware"
-	"shorty/server/pages"
+	"shorty/server/site"
 	"shorty/src/common/logging"
 	"shorty/src/common/metrics"
 	"shorty/src/common/tracing"
@@ -42,7 +42,7 @@ func New(opts Opts) *server {
 	opts.Logger = opts.Logger.WithService("server")
 	return &server{
 		opts,
-		&pages.Site{},
+		&site.Site{},
 		&profiler{
 			mutex:        &sync.Mutex{},
 			statusMetric: opts.Meter.NewGauge("profile_enabled", "Status flag of profiling mode (1-enabled, 0-disabled)"),
@@ -52,7 +52,7 @@ func New(opts Opts) *server {
 
 type server struct {
 	Opts
-	pages    *pages.Site
+	site     *site.Site
 	profiler *profiler
 }
 
@@ -67,8 +67,8 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server := gin.New()
 	server.ContextWithFallback = true // allows getting values from gin ctx, needed for tracing
 
-	server.NoRoute(s.pages.NotFound)
-	server.Use(middleware.Recovery(s.pages.InternalError, s.Logger, s.Meter, true))
+	server.NoRoute(s.site.NotFound)
+	server.Use(middleware.Recovery(s.site.InternalError, s.Logger, s.Meter, true))
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
@@ -83,7 +83,7 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server.Use(middleware.Log(s.Logger))
 	server.Use(middleware.Metrics(s.Meter))
 	server.Use(tracing.NewMiddleware(s.Tracer))
-	server.Use(middleware.Ratelimit(s.GuardService, s.pages))
+	server.Use(middleware.Ratelimit(s.GuardService, s.site))
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{s.Url},
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
@@ -105,7 +105,7 @@ func (s *server) Run(ctx context.Context, port uint16) {
 		profGroup.POST("/stop", s.ProfileStop)
 	}
 
-	server.GET("/link", s.pages.LinkForm)
+	server.GET("/link", s.site.LinkForm)
 	server.POST("/link", s.LinkResult)
 	server.GET("/l/:id", s.LinkResolve)
 

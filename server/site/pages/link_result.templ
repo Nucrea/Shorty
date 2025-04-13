@@ -1,0 +1,38 @@
+package pages
+
+type LinkResultParams struct {
+	Shortlink string
+	QRBase64  string
+}
+
+templ LinkResult(p LinkResultParams) {
+    @layout(){
+    <script>
+        const dialogShow = () => $("#qrbox").removeClass( "invisible" );
+        const dialogHide = () => $("#qrbox").addClass( "invisible" );
+        const copyLink = () => {
+            navigator.clipboard.writeText('{{ p.Shortlink }}')
+            $("#linkbox").notify("link copied to the clipboard",
+                    { position:"bottom", autoHideDelay: 1000, className: "success" });
+        }
+    </script>
+    <div id="qrbox" class="absolute z-10 flex w-full h-full justify-center items-center bg-[#00000088] invisible cursor-pointer" onclick="dialogHide()">
+        <div class="flex flex-col items-end p-4 bg-white rounded-xl shadow-lg cursor-default">
+            <div class="w-full flex flex-row justify-between items-center">
+                <p>QR Code</p>
+                <div class="w-[32px] h-[32px] rounded-[16px] bg-white text-xl text-bold text-center cursor-pointer hover:bg-gray-200" onclick="dialogHide()">x</div>
+            </div>
+            <img width="256" height="256" src={ jpegBase64Src(p.QRBase64) } alt="QRCode"/>
+        </div>
+    </div>
+    <div class="flex flex-col bg-white rounded-md shadow-lg overflow-hidden">
+        <div class="flex w-full bg-gradient-to-t from-sky-700 via-sky-800 to-sky-700">
+            <p class="text-white ml-2 text-sm">Result</p>
+        </div>
+        <div class="flex flex-row items-stretch p-4">
+            <p id="linkbox" class="flex flex-row bg-gray-100 rounded-md border-2 p-2 text-center border-solid border-gray-200 hover:border-sky-800 cursor-pointer" onclick="copyLink()">{ p.Shortlink }</p>
+            <img onclick="dialogShow()" class="rounded-md ml-2 p-1 border-2 border-solid border-gray-200 hover:border-sky-800 w-[48px] h-[48px] cursor-pointer" src={ jpegBase64Src(p.QRBase64) } alt="QRCode"/>
+        </div>
+    </div>
+    }
+}

@@ -20,14 +20,14 @@ func (s *server) FileUpload(c *gin.Context) {
 	header, err := c.FormFile("file")
 	if err != nil {
 		log.Error().Err(err).Msg("error getting file from request")
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 
 	file, err := header.Open()
 	if err != nil {
 		log.Error().Err(err).Msg("error opening tmp file")
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 	defer file.Close()
@@ -37,7 +37,7 @@ func (s *server) FileUpload(c *gin.Context) {
 	meta, err := s.FileService.UploadFile(c, header.Filename, bytes)
 	if err != nil {
 		log.Error().Err(err).Msg("error uploading file")
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 

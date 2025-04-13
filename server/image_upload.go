@@ -28,7 +28,7 @@ func (s *server) ImageUpload(c *gin.Context) {
 	file, err := header.Open()
 	if err != nil {
 		log.Error().Err(err).Msg("error opening image file")
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 	defer file.Close()
@@ -43,7 +43,7 @@ func (s *server) ImageUpload(c *gin.Context) {
 	}
 	if err != nil {
 		log.Error().Err(err).Msg("error creating image")
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 

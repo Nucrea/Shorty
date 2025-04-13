@@ -14,7 +14,7 @@ import (
 func (s *server) ImageResolve(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 
@@ -25,17 +25,17 @@ func (s *server) ImageResolve(c *gin.Context) {
 	case "t":
 		isThumbnail = true
 	default:
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 
 	meta, err := s.ImageService.GetImageMetadata(c, id)
 	if err == image.ErrImageNotFound {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 	if err != nil {
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 
@@ -62,11 +62,11 @@ func (s *server) ImageResolve(c *gin.Context) {
 
 	imageBytes, err := s.ImageService.GetImageBytes(c, id, isThumbnail)
 	if err == image.ErrImageNotFound {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 	if err != nil {
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 

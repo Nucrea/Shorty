@@ -10,22 +10,22 @@ import (
 func (s *server) LinkResolve(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 
 	url, err := s.LinksService.GetByShortId(c, id)
 	if err == links.ErrNoSuchLink || err == links.ErrBadShortId {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 	if err != nil {
 		log.Error().Err(err).Msg("error getting shortlink")
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 	if url == "" {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 

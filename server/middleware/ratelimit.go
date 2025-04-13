@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"shorty/server/pages"
+	"shorty/server/site"
 	"shorty/src/services/guard"
 
 	"github.com/gin-gonic/gin"
@@ -9,7 +9,7 @@ import (
 
 func Ratelimit(
 	guardService *guard.Service,
-	site *pages.Site,
+	site *site.Site,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		err := guardService.CheckIP(c, c.ClientIP())

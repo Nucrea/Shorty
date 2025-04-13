@@ -12,7 +12,7 @@ import (
 func (s *server) FileDownload(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 
@@ -25,16 +25,16 @@ func (s *server) FileDownload(c *gin.Context) {
 
 	meta, err := s.FileService.GetFileMetadata(c, id)
 	if err == files.ErrNotFound {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 	if err != nil {
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 
 	token := NewResourceToken(id, time.Now().Add(15*time.Minute))
 	fileRawUrl := fmt.Sprintf("%s/f/%s/%s?token=%s&expires=%d", s.Url, meta.Id, meta.Name, token.Value, token.Exipres)
 
-	s.pages.FileDownload(c, fileRawUrl)
+	s.site.FileDownload(c, fileRawUrl)
 }

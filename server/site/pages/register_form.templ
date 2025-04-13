@@ -1,0 +1,28 @@
+package pages
+
+templ RegisterForm() {
+    @layout(){
+    <script>
+        window.addEventListener("load", function(){
+            const urlParams = new URLSearchParams(window.location.search);
+            const err = urlParams.get('err');
+            if (err && err !== "") {
+                $("#loginbutton").notify(err,
+                        { position:"bottom left", autoHideDelay: 5000, className: "error" });
+            }
+        });
+    </script>
+    <div class="flex flex-col bg-white rounded-md overflow-hidden shadow-xl w-[350px]">
+        <div class="flex w-full bg-gradient-to-t from-sky-700 via-sky-800 to-sky-700">
+            <p class="text-white ml-2 text-sm">Registration</p>
+        </div>
+        <form action="/user/create" method="POST" enctype="multipart/form-data">
+            <div class="flex flex-col items-center bg-white rounded-md p-4">
+                <input type="email" name="email" placeholder="user@example.com" class="rounded-md pl-1 mb-2 border-2 border-solid border-gray-400" required>
+                <input type="password" name="password" placeholder="password" class="rounded-md pl-1 mb-2 border-2 border-solid border-gray-400" required>
+                <button id="loginbutton" class="flex p-1 pl-2 pr-2 text-center text-white rounded-md shadow-sm bg-sky-800 active:bg-sky-600 hover:bg-sky-700 transition-all">Create account</button>
+            </div>
+        </form>
+    </div>
+    }
+}

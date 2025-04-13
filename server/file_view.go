@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"shorty/server/pages"
+	"shorty/server/site/pages"
 	"shorty/src/services/files"
 
 	"github.com/gin-gonic/gin"
@@ -11,17 +11,17 @@ import (
 func (s *server) FileView(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 
 	meta, err := s.FileService.GetFileMetadata(c, id)
 	if err == files.ErrNotFound {
-		s.pages.NotFound(c)
+		s.site.NotFound(c)
 		return
 	}
 	if err != nil {
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 
@@ -30,7 +30,7 @@ func (s *server) FileView(c *gin.Context) {
 	downloadUrl := fmt.Sprintf("%s/file/download/%s", s.Url, meta.Id)
 	viewUrl := fmt.Sprintf("%s/file/view/%s", s.Url, meta.Id)
 
-	s.pages.FileView(c, pages.FileViewParams{
+	s.site.FileView(c, pages.FileViewParams{
 		FileName:        meta.Name,
 		FileSizeMB:      float32(meta.Size) / (1024 * 1024),
 		FileViewUrl:     viewUrl,

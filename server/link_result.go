@@ -26,7 +26,7 @@ func (s *server) LinkResult(c *gin.Context) {
 	}
 	if err != nil {
 		log.Error().Err(err).Msg("error creating link")
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 
@@ -34,9 +34,9 @@ func (s *server) LinkResult(c *gin.Context) {
 	qrBase64, err := common.NewQRBase64(resultUrl)
 	if err != nil {
 		log.Error().Err(err).Msg("error creating qr")
-		s.pages.InternalError(c)
+		s.site.InternalError(c)
 		return
 	}
 
-	s.pages.LinkResult(c, resultUrl, qrBase64)
+	s.site.LinkResult(c, resultUrl, qrBase64)
 }
