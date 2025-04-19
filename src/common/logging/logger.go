@@ -10,6 +10,13 @@ import (
 	"github.com/rs/zerolog"
 )
 
+func NewNoop() Logger {
+	log := zerolog.Nop()
+	return &logger{
+		zeroLogger: &log,
+	}
+}
+
 func NewLogger(opts ...Option) (Logger, error) {
 	conf := config{}
 	for _, opt := range opts {

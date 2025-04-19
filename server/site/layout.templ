@@ -1,0 +1,75 @@
+package site
+
+import "time"
+import "fmt"
+
+type AccountData struct {
+    Email string
+}
+
+type PageData struct {
+    Account *AccountData
+    RenderDuration time.Duration
+}
+
+func renderTimeStr(p PageData) string {
+    durationStr := p.RenderDuration.Round(time.Millisecond).String()
+    return fmt.Sprintf("[ rendered in %s ]", durationStr)
+}
+
+templ Layout(data PageData) {
+    <html data-theme="nord">
+        <head>
+            <title>Shorty</title>
+            <meta charset="UTF-8"/>
+            <link rel="icon" href="/static/favicon.ico"/>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+            <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
+            <script src="/static/notify.min.js"></script>
+            <script>
+                window.addEventListener("load", function(){
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const err = urlParams.get('err');
+                    if (err && err !== "") {
+                        $("#logo").notify(err,
+                                { position:"bottom left", autoHideDelay: 5000, className: "error" });
+                    }
+                });
+            </script>
+        </head>
+        <body class="w-full min-h-full">
+            <div class="absolute top-0 flex flex-row justify-center items-center w-full h-[40px] bg-sky-800 p-1 shadow-xl">
+                <a href="/link" target="_self" class="text-white text-center pl-2 pr-2 h-full hover:bg-sky-700 transition-all">Link</a>
+                <div class="border-r ml-2 mr-2 h-full border-white"></div>
+                <a href="/image" target="_self" class="text-white text-center pl-2 pr-2 h-full hover:bg-sky-700 transition-all">Image</a>
+                <div class="border-r ml-2 mr-2 h-full border-white"></div>
+                <a href="/file" target="_self" class="text-white text-center pl-2 pr-2 h-full hover:bg-sky-700 transition-all">File</a>
+            </div>
+            <div id="logo" class="absolute top-0 left-2">
+                <a href="/" target="_self">
+                    <div class="flex flex-row items-center">
+                        <img src="/static/favicon.ico" class="size-6"/>
+                        <p class="font-bold text-white text-3xl ml-2">Shorty</p>
+                    </div>
+                </a>
+            </div>
+            <div class="absolute right-2 flex flex-row justify-center items-center h-[40px] bg-sky-800 p-1 shadow-xl">
+                if data.Account == nil {
+                    <a href="/login" target="_self" class="text-white text-center pl-2 pr-2 h-full hover:bg-sky-700 transition-all">Login</a>
+                } else {
+                    <a href="/account" target="_self" class="text-white text-center text-lg pl-2 pr-2 mr-2 h-full hover:bg-sky-700 transition-all">{ data.Account.Email }</a>
+                    <form action="/logout" method="POST">
+                        <button class="text-white text-center pl-2 pr-2 h-full hover:bg-sky-700 transition-all">Logout</button>
+                    </form>
+                }
+            </div>
+            <div class="w-full min-h-full flex justify-center items-center">
+                { children... }
+            </div>
+            <div class="flex absolute bottom-2 left-1/2 transform -translate-x-1/2">
+                <p class="text-white text-sm">{ renderTimeStr(data) }</p>
+            </div>
+        </body>
+    </html>
+}

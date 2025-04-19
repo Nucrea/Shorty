@@ -6,14 +6,14 @@ import (
 	"shorty/src/services/image"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
 )
 
-func (s *server) ImageView(c *gin.Context) {
+func (s *server) ImageView(c *gin.Context) templ.Component {
 	id := c.Param("id")
 	if id == "" {
-		s.site.NotFound(c)
-		return
+		return s.site.NotFound(c)
 	}
 
 	year, month, day := time.Now().Add(24 * time.Hour).Date()
@@ -21,12 +21,10 @@ func (s *server) ImageView(c *gin.Context) {
 
 	meta, err := s.ImageService.GetImageMetadata(c, id)
 	if err == image.ErrImageNotFound {
-		s.site.NotFound(c)
-		return
+		return s.site.NotFound(c)
 	}
 	if err != nil {
-		s.site.InternalError(c)
-		return
+		return s.site.InternalError(c)
 	}
 
 	viewUrl := fmt.Sprintf("%s/image/view/%s", s.Url, meta.Id)
@@ -35,7 +33,7 @@ func (s *server) ImageView(c *gin.Context) {
 	token := NewResourceToken(meta.Id, expiresAt)
 	imgUrl := fmt.Sprintf("%s/i/o/%s?token=%s&expires=%d", s.Url, meta.Id, token.Value, token.Exipres)
 
-	s.site.ImageView(c, pages.ImageViewParams{
+	return s.site.ImageView(c, pages.ImageViewParams{
 		FileName:     meta.Name,
 		SizeMB:       float32(meta.Size) / (1024 * 1024),
 		ViewUrl:      viewUrl,

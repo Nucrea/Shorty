@@ -5,24 +5,22 @@ import (
 	"shorty/server/site/pages"
 	"shorty/src/services/files"
 
+	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
 )
 
-func (s *server) FileView(c *gin.Context) {
+func (s *server) FileView(c *gin.Context) templ.Component {
 	id := c.Param("id")
 	if id == "" {
-		s.site.NotFound(c)
-		return
+		return s.site.NotFound(c)
 	}
 
 	meta, err := s.FileService.GetFileMetadata(c, id)
 	if err == files.ErrNotFound {
-		s.site.NotFound(c)
-		return
+		return s.site.NotFound(c)
 	}
 	if err != nil {
-		s.site.InternalError(c)
-		return
+		return s.site.InternalError(c)
 	}
 
 	captcha, _ := s.GuardService.CreateCaptcha(c)
@@ -30,7 +28,7 @@ func (s *server) FileView(c *gin.Context) {
 	downloadUrl := fmt.Sprintf("%s/file/download/%s", s.Url, meta.Id)
 	viewUrl := fmt.Sprintf("%s/file/view/%s", s.Url, meta.Id)
 
-	s.site.FileView(c, pages.FileViewParams{
+	return s.site.FileView(c, pages.FileViewParams{
 		FileName:        meta.Name,
 		FileSizeMB:      float32(meta.Size) / (1024 * 1024),
 		FileViewUrl:     viewUrl,

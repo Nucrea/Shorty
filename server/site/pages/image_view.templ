@@ -15,7 +15,6 @@ func bbCode(p ImageViewParams) string {
 }
 
 templ ImageView(p ImageViewParams) {
-    @layout(){
     <div class="bg-white rounded-md shadow-lg p-4">
         <div class="flex flex-row justify-between items-start w-full">
             <div class="flex flex-col">
@@ -34,5 +33,4 @@ templ ImageView(p ImageViewParams) {
         <p class="mt-1">BB-Code:</p>
         <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">{ bbCode(p) }</textarea>
     </div>
-    }
 }

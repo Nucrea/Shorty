@@ -16,9 +16,9 @@ import (
 	"shorty/src/services/image"
 	"shorty/src/services/links"
 	"shorty/src/services/users"
-	"sync"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/trace"
@@ -45,17 +45,12 @@ func New(opts Opts) *server {
 	return &server{
 		opts,
 		&site.Site{},
-		&profiler{
-			mutex:        &sync.Mutex{},
-			statusMetric: opts.Meter.NewGauge("profile_enabled", "Status flag of profiling mode (1-enabled, 0-disabled)"),
-		},
 	}
 }
 
 type server struct {
 	Opts
-	site     *site.Site
-	profiler *profiler
+	site *site.Site
 }
 
 func (s *server) Run(ctx context.Context, port uint16) {
@@ -69,8 +64,8 @@ func (s *server) Run(ctx context.Context, port uint16) {
 	server := gin.New()
 	server.ContextWithFallback = true // allows getting values from gin ctx, needed for tracing
 
-	server.NoRoute(s.site.NotFound)
-	server.Use(middleware.Recovery(s.site.InternalError, s.Logger, s.Meter, true))
+	server.NoRoute(s.TemplWrapper(s.site.NotFound))
+	server.Use(middleware.Recovery(s.TemplWrapper(s.site.InternalError), s.Logger, s.Meter, true))
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
@@ -93,41 +88,70 @@ func (s *server) Run(ctx context.Context, port uint16) {
 		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	}))
+	server.Use(middleware.Authorization(s.UserService))
 
-	profGroup := server.Group("/profile")
-	{
-		profGroup.Use(func(c *gin.Context) {
-			if c.GetHeader("Authorization") != s.ApiKey {
-				c.AbortWithStatus(403)
-			} else {
-				c.Next()
-			}
-		})
-		profGroup.POST("/start", s.ProfileStart)
-		profGroup.POST("/stop", s.ProfileStop)
-	}
+	server.GET("/link", s.TemplWrapper(s.site.LinkForm))
+	server.POST("/link", s.TemplWrapper(s.LinkResult))
+	server.GET("/l/:id", s.TemplWrapper(s.LinkResolve))
 
-	server.GET("/link", s.site.LinkForm)
-	server.POST("/link", s.LinkResult)
-	server.GET("/l/:id", s.LinkResolve)
+	server.GET("/image", s.TemplWrapper(s.ImageForm))
+	server.POST("/image", s.TemplWrapper(s.ImageUpload))
+	server.GET("/image/view/:id", s.TemplWrapper(s.ImageView))
+	server.GET("/i/:type/:id", s.TemplWrapper(s.ImageResolve))
 
-	server.GET("/image", s.ImageForm)
-	server.POST("/image", s.ImageUpload)
-	server.GET("/image/view/:id", s.ImageView)
-	server.GET("/i/:type/:id", s.ImageResolve)
+	server.GET("/file", s.TemplWrapper(s.FileForm))
+	server.POST("/file", s.TemplWrapper(s.FileUpload))
+	server.GET("/file/view/:id", s.TemplWrapper(s.FileView))
+	server.GET("/file/download/:id", s.TemplWrapper(s.FileDownload))
+	server.GET("/f/:id/:name", s.TemplWrapper(s.FileResolve))
 
-	server.GET("/file", s.FileForm)
-	server.POST("/file", s.FileUpload)
-	server.GET("/file/view/:id", s.FileView)
-	server.GET("/file/download/:id", s.FileDownload)
-	server.GET("/f/:id/:name", s.FileResolve)
+	server.GET("/login", s.TemplWrapper(s.site.UserLogin))
+	server.POST("/logout", s.TemplWrapper(s.UserLogout))
+	server.GET("/register", s.TemplWrapper(s.site.UserRegister))
+	server.POST("/user/login", s.TemplWrapper(s.UserLogin))
+	server.POST("/user/create", s.TemplWrapper(s.UserRegister))
 
-	server.GET("/login", s.site.)
-	server.GET("/register", s.pages.RegisterForm)
-	server.GET("/account", s.UserAccount)
-	server.POST("/user/login", s.UserLogin)
-	server.POST("/user/create", s.UserRegister)
+	server.GET("/account", s.TemplWrapper(s.UserAccount))
+	server.GET("/account/settings", s.TemplWrapper(s.UserAccount))
+	server.GET("/account/links", s.TemplWrapper(s.UserAccount))
 
 	s.Logger.Info().Msgf("Started server on port %d", port)
 	server.Run(fmt.Sprintf(":%d", port))
+}
+
+type TemplFunc func(c *gin.Context) templ.Component
+
+func (s *server) TemplWrapper(f TemplFunc) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		start := time.Now()
+
+		children := f(c)
+		if children == nil {
+			return
+		}
+
+		var (
+			user *users.UserDTO
+			err  error
+		)
+		if session := middleware.GetUserSession(c); session != nil {
+			user, err = s.UserService.GetById(c, session.UserId)
+			if err != nil {
+				s.site.InternalError(c)
+				return
+			}
+		}
+
+		var account *site.AccountData
+		if user != nil {
+			account = &site.AccountData{Email: user.Email}
+		}
+		duration := time.Since(start)
+		ctx := templ.WithChildren(c, children)
+
+		site.Layout(site.PageData{
+			Account:        account,
+			RenderDuration: duration,
+		}).Render(ctx, c.Writer)
+	}
 }

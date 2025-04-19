@@ -29,51 +29,33 @@ func ImageForm(id, imageBase64 string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-			if !templ_7745c5c3_IsBuffer {
-				defer func() {
-					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-					if templ_7745c5c3_Err == nil {
-						templ_7745c5c3_Err = templ_7745c5c3_BufErr
-					}
-				}()
-			}
-			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\n        window.addEventListener(\"load\", function(){\n            const urlParams = new URLSearchParams(window.location.search);\n            const err = urlParams.get('err');\n            if (err && err !== \"\") {\n                $(\"#uploadbox\").notify(err,\n                        { position:\"bottom left\", autoHideDelay: 5000, className: \"error\" });\n            }\n        });\n    </script> <div class=\"flex flex-col bg-white rounded-md overflow-hidden shadow-xl w-[350px]\"><div class=\"flex w-full bg-gradient-to-t from-sky-700 via-sky-800 to-sky-700\"><p class=\"text-white ml-2 text-sm\">Image</p></div><form action=\"/image\" method=\"POST\" enctype=\"multipart/form-data\"><div class=\"bg-white rounded-md p-4\"><input type=\"hidden\" name=\"id\" value=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(id)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `image_form.templ`, Line: 21, Col: 57}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"> <input type=\"file\" name=\"image\" accept=\"image/jpeg\" class=\"rounded-md mb-2 border-2 border-solid border-gray-400\" required><div class=\"flex flex-row justify-between items-start\"><button id=\"uploadbox\" class=\"flex p-1 pl-2 pr-2 text-center text-white rounded-md shadow-sm bg-sky-800 active:bg-sky-600 hover:bg-sky-700 transition-all\">Upload image</button><div class=\"flex flex-row rounded-md border border-gray-300\"><img class=\"w-24 h-12 border-r border-gray-300\" src=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(jpegBase64Src(imageBase64))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `image_form.templ`, Line: 26, Col: 104}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" alt=\"token\"> <input type=\"text\" inputmode=\"numeric\" placeholder=\"Captcha...\" name=\"token\" class=\"w-20 h-12 text-center\" required></div></div></div></form><hr align=\"center\" class=\"mt-1 w-full\" size=\"2\" color=\"#000000\"><p class=\"p-1\">5MB max, jpeg only</p></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			return nil
-		})
-		templ_7745c5c3_Err = layout().Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col bg-white rounded-md overflow-hidden shadow-xl w-[350px]\"><div class=\"flex w-full bg-gradient-to-t from-sky-700 via-sky-800 to-sky-700\"><p class=\"text-white ml-2 text-sm\">Image</p></div><form action=\"/image\" method=\"POST\" enctype=\"multipart/form-data\"><div class=\"bg-white rounded-md p-4\"><input type=\"hidden\" name=\"id\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(id)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/site/pages/image_form.templ`, Line: 10, Col: 57}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"> <input type=\"file\" name=\"image\" accept=\"image/jpeg\" class=\"rounded-md mb-2 border-2 border-solid border-gray-400\" required><div class=\"flex flex-row justify-between items-start\"><button id=\"uploadbox\" class=\"flex p-1 pl-2 pr-2 text-center text-white rounded-md shadow-sm bg-sky-800 active:bg-sky-600 hover:bg-sky-700 transition-all\">Upload image</button><div class=\"flex flex-row rounded-md border border-gray-300\"><img class=\"w-24 h-12 border-r border-gray-300\" src=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(jpegBase64Src(imageBase64))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/site/pages/image_form.templ`, Line: 15, Col: 104}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" alt=\"token\"> <input type=\"text\" inputmode=\"numeric\" placeholder=\"Captcha...\" name=\"token\" class=\"w-20 h-12 text-center\" required></div></div></div></form><hr align=\"center\" class=\"mt-1 w-full\" size=\"2\" color=\"#000000\"><p class=\"p-1\">5MB max, jpeg only</p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

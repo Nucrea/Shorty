@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/mail"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -41,17 +42,21 @@ func ValidateShortId(value string) bool {
 	return shortIdRegexp.MatchString(value)
 }
 
+func ValidateUserId(value string) bool {
+	_, err := strconv.Atoi(value)
+	return err == nil
+}
+
 func ValidateUrl(url string) string {
 	if len(url) > 2000 {
 		return ""
 	}
-
 	url = strings.TrimSpace(url)
 	if !govalidator.IsURL(url) {
 		return ""
 	}
 
-	if !strings.HasSuffix(url, "http") || !strings.HasSuffix(url, "https") {
+	if !strings.HasPrefix(url, "http") && !strings.HasPrefix(url, "https") {
 		url = fmt.Sprintf("https://%s", url)
 	}
 

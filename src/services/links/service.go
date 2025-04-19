@@ -6,6 +6,7 @@ import (
 	"shorty/src/common"
 	"shorty/src/common/logging"
 	"shorty/src/common/metrics"
+	"strings"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -36,36 +37,7 @@ type Service struct {
 	resolvedCounter metrics.Counter
 }
 
-func (s *Service) GetById(ctx context.Context, linkId string) (*LinkDTO, error) {
-	log := s.logger.WithContext(ctx)
-
-	ctx, span := s.tracer.Start(ctx, "links::GetByShortId")
-	defer span.End()
-
-	if !common.ValidateShortId(linkId) {
-		return nil, ErrBadShortId
-	}
-
-	link, err := s.storage.GetShortlink(ctx, linkId)
-	if err != nil {
-		log.Error().Err(err).Msgf("getting link with id=%s from storage", linkId)
-		return nil, ErrInternal
-	}
-	if link == "" {
-		log.Info().Msgf("no such link with id=%s", linkId)
-		return nil, ErrNoSuchLink
-	}
-
-	log.Info().Msgf("got link with id=%s from storage", linkId)
-	s.resolvedCounter.Inc()
-
-	return &LinkDTO{
-		Id:  linkId,
-		Url: link,
-	}, nil
-}
-
-func (s *Service) Create(ctx context.Context, url string) (*LinkDTO, error) {
+func (s *Service) Save(ctx context.Context, url string, userId *string) (*LinkDTO, error) {
 	log := s.logger.WithContext(ctx)
 
 	ctx, span := s.tracer.Start(ctx, "links::CreateShortlink")
@@ -76,10 +48,16 @@ func (s *Service) Create(ctx context.Context, url string) (*LinkDTO, error) {
 		log.Info().Msgf("invalid input url %s", url)
 		return nil, ErrBadUrl
 	}
-
 	id := common.NewShortId(10)
-	if err := s.storage.SaveShortlink(ctx, id, url); err != nil {
-		log.Error().Err(err).Msgf("creating qr and link with storage")
+
+	var err error
+	if userId != nil {
+		err = s.storage.SaveLinkForUser(ctx, id, *userId, url)
+	} else {
+		err = s.storage.SaveLink(ctx, id, url)
+	}
+	if err != nil {
+		log.Error().Err(err).Msgf("failed saving link to storage")
 		return nil, ErrInternal
 	}
 
@@ -90,4 +68,93 @@ func (s *Service) Create(ctx context.Context, url string) (*LinkDTO, error) {
 		Id:  id,
 		Url: url,
 	}, nil
+}
+
+func (s *Service) Update(ctx context.Context, id, userId, url string) error {
+	log := s.logger.WithContext(ctx)
+
+	ctx, span := s.tracer.Start(ctx, "links::CreateShortlink")
+	defer span.End()
+
+	url = common.ValidateUrl(url)
+	if url == "" {
+		log.Info().Msgf("invalid input url %s", url)
+		return ErrBadUrl
+	}
+	if !common.ValidateShortId(id) {
+		return ErrBadShortId
+	}
+
+	err := s.storage.SaveLinkForUser(ctx, id, userId, url)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed saving link to storage")
+		return ErrInternal
+	}
+
+	log.Info().Msgf("updated shortlink with id=%s", id)
+	return nil
+}
+
+func (s *Service) GetById(ctx context.Context, linkId string) (*LinkDTO, error) {
+	log := s.logger.WithContext(ctx)
+
+	ctx, span := s.tracer.Start(ctx, "links::GetByShortId")
+	defer span.End()
+
+	if !common.ValidateShortId(linkId) {
+		return nil, ErrBadShortId
+	}
+
+	link, err := s.storage.GetLinkById(ctx, linkId)
+	if err != nil {
+		log.Error().Err(err).Msgf("getting link with id=%s from storage", linkId)
+		return nil, ErrInternal
+	}
+	if link == nil {
+		log.Info().Msgf("no such link with id=%s", linkId)
+		return nil, ErrNoSuchLink
+	}
+
+	log.Info().Msgf("got link with id=%s from storage", linkId)
+	s.resolvedCounter.Inc()
+
+	return link, nil
+}
+
+func (s *Service) GetByUserId(ctx context.Context, userId string) ([]*LinkDTO, error) {
+	log := s.logger.WithContext(ctx)
+
+	ctx, span := s.tracer.Start(ctx, "links::GetByUserId")
+	defer span.End()
+
+	links, err := s.storage.GetLinksByUserId(ctx, userId)
+	if err != nil {
+		log.Error().Err(err).Msgf("getting link for userId=%s from storage", userId)
+		return nil, ErrInternal
+	}
+	if links == nil {
+		log.Info().Msgf("no such links for userId=%s", userId)
+		return nil, ErrNoSuchLink
+	}
+
+	log.Info().Msgf("got links with userId=%s from storage", userId)
+	return links, nil
+}
+
+func (s *Service) Delete(ctx context.Context, ids ...string) error {
+	log := s.logger.WithContext(ctx)
+
+	ctx, span := s.tracer.Start(ctx, "links::GetByUserId")
+	defer span.End()
+
+	idsStr := strings.Join(ids, ", ")
+
+	err := s.storage.DeleteLinks(ctx, ids...)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed deleting link for with id=[ %s ] from storage", idsStr)
+		return ErrInternal
+	}
+
+	log.Info().Msgf("deleted link with ids=[ %s ] from storage", idsStr)
+	return nil
 }

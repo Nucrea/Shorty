@@ -132,14 +132,44 @@ func (s *Service) Authorize(ctx context.Context, token string) (*SessionDTO, err
 	defer span.End()
 
 	hashedKey := s.hashSessionKey(token)
-	user, err := s.sessionRepo.GetSession(ctx, hashedKey)
+	session, err := s.sessionRepo.GetSession(ctx, hashedKey)
 	if err != nil {
 		log.Error().Err(err).Msg("failed getting auth session")
 		return nil, ErrInternal
 	}
-	if user == nil {
+	if session == nil {
 		log.Info().Msgf("no such session with key=%s", common.MaskSecret(token))
 		return nil, ErrAuthorization
 	}
+	return session, nil
+}
+
+func (s *Service) DeleteSession(ctx context.Context, token string) error {
+	log := s.logger.WithContext(ctx)
+	ctx, span := s.tracer.Start(ctx, "users::DeleteSession")
+	defer span.End()
+
+	err := s.sessionRepo.DelSession(ctx, token)
+	if err != nil {
+		log.Error().Err(err).Msg("failed clearing session")
+	}
+	return err
+}
+
+func (s *Service) GetById(ctx context.Context, userId string) (*UserDTO, error) {
+	log := s.logger.WithContext(ctx)
+	ctx, span := s.tracer.Start(ctx, "users::GetById")
+	defer span.End()
+
+	user, err := s.userRepo.GetUserById(ctx, userId)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed getting with id=%s", userId)
+		return nil, ErrInternal
+	}
+	if user == nil {
+		log.Info().Msgf("no such user with id=%s", userId)
+		return nil, ErrAuthorization
+	}
+
 	return user, nil
 }

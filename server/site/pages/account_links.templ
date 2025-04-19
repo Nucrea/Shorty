@@ -1,0 +1,70 @@
+package pages
+
+type AccountViewUser struct {
+    Email string
+}
+
+type AccountViewLink struct {
+    SourceUrl string
+    DestinationUrl string
+    QRBase64 string
+}
+
+type AccountViewImage struct {
+	FileName     string
+	SizeMB       float32
+    ViewUrl      string
+	ThumbnailUrl string
+}
+
+type AccountViewFile struct {
+	FileName     string
+    ViewUrl      string
+	SizeMB       float32
+}
+
+type AccountViewParams struct {
+    User AccountViewUser
+    Links []AccountViewLink
+    // Images []AccountViewImage
+    // Files []AccountViewFile
+}
+
+templ linkListItem(link AccountViewLink) {
+  <li class="list-row justify-between content-between">
+    <div>
+      <div>{ link.SourceUrl }</div>
+      <div class="text-xs uppercase font-semibold opacity-60">{ link.DestinationUrl }</div>
+    </div>
+    <button class="btn btn-square btn-ghost">
+      <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor"><path d="M6 3L20 12 6 21 6 3z"></path></g></svg>
+    </button>
+    <button class="btn btn-square btn-ghost">
+      <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></g></svg>
+    </button>
+  </li>
+}
+
+templ AccountViewLinks(p AccountViewParams) {
+    <div class="flex flex-row items-start">
+        <ul class="menu rounded-box w-24 ml-2 mr-2">
+            <li><a class="menu-active">Links</a></li>
+            <li><a>Images</a></li>
+            <li><a>Files</a></li>
+        </ul>
+        <div class="flex flex-col items-center">
+          <div class="flex flex-col rounded-md overflow-hidden shadow-xl">
+            <ul class="list">
+            for _, link := range p.Links {
+                @linkListItem(link)
+            }
+            </ul>
+          </div>
+          <div class="join mt-2">
+            <button class="join-item btn">«</button>
+            <button class="join-item btn">Page 22</button>
+            <button class="join-item btn">»</button>
+          </div>
+        </div>
+    </div>
+}

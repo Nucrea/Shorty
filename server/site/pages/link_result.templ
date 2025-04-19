@@ -6,7 +6,6 @@ type LinkResultParams struct {
 }
 
 templ LinkResult(p LinkResultParams) {
-    @layout(){
     <script>
         const dialogShow = () => $("#qrbox").removeClass( "invisible" );
         const dialogHide = () => $("#qrbox").addClass( "invisible" );
@@ -34,5 +33,4 @@ templ LinkResult(p LinkResultParams) {
             <img onclick="dialogShow()" class="rounded-md ml-2 p-1 border-2 border-solid border-gray-200 hover:border-sky-800 w-[48px] h-[48px] cursor-pointer" src={ jpegBase64Src(p.QRBase64) } alt="QRCode"/>
         </div>
     </div>
-    }
 }

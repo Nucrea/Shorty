@@ -1,6 +1,7 @@
 package links
 
 type LinkDTO struct {
-	Id  string
-	Url string
+	Id     string
+	UserId string
+	Url    string
 }

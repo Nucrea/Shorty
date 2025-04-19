@@ -53,6 +53,11 @@ type Postgres struct {
 	latencyHist metrics.Histogram
 }
 
+// DeleteLinks implements links.Storage.
+func (p *Postgres) DeleteLinks(ctx context.Context, ids ...string) error {
+	panic("unimplemented")
+}
+
 func (p *Postgres) CreateUser(ctx context.Context, user users.UserDTO) (*users.UserDTO, error) {
 	scanFunc := func(row pgx.Row) (*users.UserDTO, error) {
 		r := &users.UserDTO{Email: user.Email, Secret: user.Secret}
@@ -97,7 +102,7 @@ func (p *Postgres) SaveImageMetadata(ctx context.Context, meta image.ImageMetada
 func (p *Postgres) GetImageMetadataDuplicate(ctx context.Context, size int, hash string) (*image.ImageMetadataExDTO, error) {
 	scanFunc := func(row pgx.Row) (*image.ImageMetadataExDTO, error) {
 		r := &image.ImageMetadataExDTO{Size: size, Hash: hash}
-		return r, row.Scan(&r.Name, &r.OriginalResourceId, &r.OriginalId, &r.ThumbnailId, &r.ThumbnailResourceId)
+		return r, row.Scan(&r.Id, &r.Name, &r.OriginalId, &r.OriginalResourceId, &r.ThumbnailId, &r.ThumbnailResourceId)
 	}
 
 	query := `SELECT i.id, i.name, ao.id, ao.resource_id, at.id, at.resource_id
@@ -122,19 +127,34 @@ func (p *Postgres) GetImageMetadataById(ctx context.Context, id string) (*image.
 	return queryRow(ctx, p, "GetImageMetadataById", scanFunc, query, id)
 }
 
-func (p *Postgres) SaveShortlink(ctx context.Context, id, url string) error {
+func (p *Postgres) GetLinkById(ctx context.Context, id string) (*links.LinkDTO, error) {
+	scanFunc := func(row pgx.Row) (*links.LinkDTO, error) {
+		dto := &links.LinkDTO{Id: id}
+		return dto, row.Scan(&dto.UserId, &dto.Url)
+	}
+
+	query := `select coalesce(user_id::text, ''), url from shortlinks where id=$1;`
+	return queryRow(ctx, p, "GetLinkById", scanFunc, query, id)
+}
+
+func (p *Postgres) GetLinksByUserId(ctx context.Context, userId string) ([]*links.LinkDTO, error) {
+	scanFunc := func(row pgx.Row) (*links.LinkDTO, error) {
+		dto := &links.LinkDTO{UserId: userId}
+		return dto, row.Scan(&dto.Id, &dto.Url)
+	}
+
+	query := `select id, url from shortlinks where user_id=$1;`
+	return queryRows(ctx, p, "GetLinksByUserId", scanFunc, query, userId)
+}
+
+func (p *Postgres) SaveLink(ctx context.Context, id, url string) error {
 	query := `insert into shortlinks(id, url) values($1, $2);`
 	return exec(ctx, p, "SaveShortlink", query, id, url)
 }
 
-func (p *Postgres) GetShortlink(ctx context.Context, id string) (string, error) {
-	scanFunc := func(row pgx.Row) (string, error) {
-		url := ""
-		return url, row.Scan(&url)
-	}
-
-	query := `update shortlinks set read_count=read_count+1 where id=$1 returning url;`
-	return queryRow(ctx, p, "GetShortlink", scanFunc, query, id)
+func (p *Postgres) SaveLinkForUser(ctx context.Context, id, userId, url string) error {
+	query := `insert into shortlinks(id, user_id, url) values($1, $2, $3);`
+	return exec(ctx, p, "SaveShortlink", query, id, userId, url)
 }
 
 func (p *Postgres) SaveFileMetadata(ctx context.Context, meta files.FileMetadataDTO) error {

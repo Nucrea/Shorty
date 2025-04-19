@@ -42,6 +42,41 @@ func queryRow[T any](
 	return val, nil
 }
 
+func queryRows[T any](
+	ctx context.Context,
+	p *Postgres,
+	funcName string,
+	scanFunc func(row pgx.Row) (T, error),
+	query string, arguments ...any,
+) ([]T, error) {
+	defer observe(ctx, p, funcName)()
+
+	rows, err := p.db.Query(ctx, query, arguments...)
+	if err != nil {
+		p.logger.WithContext(ctx).Error().Err(err).Str("func", funcName).Msg("failed exec db query")
+		return nil, err
+	}
+
+	result := []T{}
+	for rows.Next() {
+		val, err := scanFunc(rows)
+		if err != nil {
+			p.logger.WithContext(ctx).Error().Err(err).Str("func", funcName).Msg("failed exec db query")
+			return nil, err
+		}
+		result = append(result, val)
+	}
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		p.logger.WithContext(ctx).Error().Err(err).Str("func", funcName).Msg("failed exec db query")
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func exec(ctx context.Context, p *Postgres, funcName, query string, arguments ...any) error {
 	defer observe(ctx, p, funcName)()
 

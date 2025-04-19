@@ -74,6 +74,13 @@ func (r *redisDb) PutSession(ctx context.Context, key string, session users.Sess
 	return r.rdb.SetEx(ctx, newKey, session.UserId, timeout).Err()
 }
 
+func (r *redisDb) DelSession(ctx context.Context, key string) error {
+	defer r.observe(ctx, "DelSession")()
+
+	newKey := fmt.Sprintf("session:%s", key)
+	return r.rdb.Del(ctx, newKey).Err()
+}
+
 func (r *redisDb) IncIpRate(ctx context.Context, ip string, window time.Duration) (int, error) {
 	defer r.observe(ctx, "IncIpRate")()
 

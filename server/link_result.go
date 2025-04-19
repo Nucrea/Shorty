@@ -3,40 +3,50 @@ package server
 import (
 	"fmt"
 	"net/url"
-	"shorty/src/common"
-	"shorty/src/services/links"
 
+	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
 
-func (s *server) LinkResult(c *gin.Context) {
+func (s *server) linkUrlfromId(linkId string) string {
+	return fmt.Sprintf("%s/l/%s", s.Url, linkId)
+}
+
+func (s *server) LinkResult(c *gin.Context) templ.Component {
 	inputUrl := c.PostForm("url")
 	if inputUrl == "" {
 		log.Error().Msg("empty url")
 		c.Redirect(302, "/link?err="+url.QueryEscape("empty url"))
-		return
+		return nil
 	}
+	return nil
 
-	link, err := s.LinksService.Create(c, inputUrl)
-	if err == links.ErrBadUrl {
-		log.Error().Msg("bad url")
-		c.Redirect(302, "/link?err="+url.QueryEscape(err.Error()))
-		return
-	}
-	if err != nil {
-		log.Error().Err(err).Msg("error creating link")
-		s.site.InternalError(c)
-		return
-	}
+	// var userIdPtr *string
+	// userId := c.GetString("userId")
+	// if userId != "" {
+	// 	userIdPtr = &userId
+	// }
 
-	resultUrl := fmt.Sprintf("%s/l/%s", s.Url, link.Id)
-	qrBase64, err := common.NewQRBase64(resultUrl)
-	if err != nil {
-		log.Error().Err(err).Msg("error creating qr")
-		s.site.InternalError(c)
-		return
-	}
+	// link, err := s.LinksService.Create(c, inputUrl, userIdPtr)
+	// if err == links.ErrBadUrl {
+	// 	log.Error().Msg("bad url")
+	// 	c.Redirect(302, "/link?err="+url.QueryEscape(err.Error()))
+	// 	return nil
+	// }
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("error creating link")
+	// 	s.site.InternalError(c)
+	// 	return nil
+	// }
 
-	s.site.LinkResult(c, resultUrl, qrBase64)
+	// resultUrl := fmt.Sprintf("%s/l/%s", s.Url, link.Id)
+	// qrBase64, err := common.NewQRBase64(resultUrl)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("error creating qr")
+	// 	s.site.InternalError(c)
+	// 	return nil
+	// }
+
+	// return s.site.LinkResult(c, resultUrl, qrBase64)
 }

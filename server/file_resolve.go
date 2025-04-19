@@ -8,14 +8,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
 )
 
-func (s *server) FileResolve(c *gin.Context) {
+func (s *server) FileResolve(c *gin.Context) templ.Component {
 	id := c.Param("id")
 	if id == "" {
-		s.site.NotFound(c)
-		return
+		return s.site.NotFound(c)
 	}
 
 	token, expiresStr := c.Query("token"), c.Query("expires")
@@ -28,18 +28,17 @@ func (s *server) FileResolve(c *gin.Context) {
 		s.Logger.WithContext(c).Info().Msgf("file (id=%s) token(%s) expired, redirecting to view", id, common.MaskSecret(token))
 		viewUrl := fmt.Sprintf("%s/file/view/%s?err=%s", s.Url, id, url.QueryEscape("Download link expired"))
 		c.Redirect(302, viewUrl)
-		return
+		return nil
 	}
 
 	fileBytes, err := s.FileService.GetFileBytes(c, id)
 	if err == files.ErrNotFound {
-		s.site.NotFound(c)
-		return
+		return s.site.NotFound(c)
 	}
 	if err != nil {
-		s.site.InternalError(c)
-		return
+		return s.site.InternalError(c)
 	}
 
 	c.Data(200, "application/octet-stream", fileBytes)
+	return nil
 }

@@ -15,4 +15,5 @@ type UserRepo interface {
 type SessionRepo interface {
 	PutSession(ctx context.Context, key string, session SessionDTO, expiration time.Duration) error
 	GetSession(ctx context.Context, key string) (*SessionDTO, error)
+	DelSession(ctx context.Context, key string) error
 }

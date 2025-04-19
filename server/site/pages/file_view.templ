@@ -12,17 +12,6 @@ type FileViewParams struct {
 }
 
 templ FileView(p FileViewParams) {
-    @layout(){
-    <script>
-        window.addEventListener("load", function(){
-            const urlParams = new URLSearchParams(window.location.search);
-            const err = urlParams.get('err');
-            if (err && err !== "") {
-                $("#notifyanchor").notify(err,
-                        { position:"bottom left", autoHideDelay: 5000, className: "error" });
-            }
-        });
-    </script>
     <div class="bg-white rounded-md shadow-lg p-4 min-w-[400px]">
         <div class="flex flex-row justify-between items-start w-full">
             <div class="flex flex-row justify-start items-start">
@@ -51,5 +40,4 @@ templ FileView(p FileViewParams) {
         <p>URL:</p>
         <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">{ string(templ.URL(p.FileViewUrl)) }</textarea>
     </div>
-    }
 }

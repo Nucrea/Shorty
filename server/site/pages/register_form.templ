@@ -1,17 +1,6 @@
 package pages
 
 templ RegisterForm() {
-    @layout(){
-    <script>
-        window.addEventListener("load", function(){
-            const urlParams = new URLSearchParams(window.location.search);
-            const err = urlParams.get('err');
-            if (err && err !== "") {
-                $("#loginbutton").notify(err,
-                        { position:"bottom left", autoHideDelay: 5000, className: "error" });
-            }
-        });
-    </script>
     <div class="flex flex-col bg-white rounded-md overflow-hidden shadow-xl w-[350px]">
         <div class="flex w-full bg-gradient-to-t from-sky-700 via-sky-800 to-sky-700">
             <p class="text-white ml-2 text-sm">Registration</p>
@@ -24,5 +13,4 @@ templ RegisterForm() {
             </div>
         </form>
     </div>
-    }
 }
