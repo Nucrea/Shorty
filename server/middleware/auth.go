@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/http"
 	"shorty/src/services/users"
 
 	"github.com/gin-gonic/gin"
@@ -21,11 +22,13 @@ func Authorization(userService *users.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionCookie, err := c.Request.Cookie(SessionCookieKey)
 		if err != nil || sessionCookie == nil {
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
 		session, err := userService.Authorize(c, sessionCookie.Value)
 		if err != nil || session == nil {
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 

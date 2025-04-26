@@ -43,14 +43,13 @@ func (s *Service) Save(ctx context.Context, url string, userId *string) (*LinkDT
 	ctx, span := s.tracer.Start(ctx, "links::CreateShortlink")
 	defer span.End()
 
-	url = common.ValidateUrl(url)
-	if url == "" {
-		log.Info().Msgf("invalid input url %s", url)
+	url, err := common.ValidateUrl(url)
+	if err != nil {
+		log.Info().Err(err).Msgf("invalid input url %s", url)
 		return nil, ErrBadUrl
 	}
 	id := common.NewShortId(10)
 
-	var err error
 	if userId != nil {
 		err = s.storage.SaveLinkForUser(ctx, id, *userId, url)
 	} else {
@@ -76,16 +75,16 @@ func (s *Service) Update(ctx context.Context, id, userId, url string) error {
 	ctx, span := s.tracer.Start(ctx, "links::CreateShortlink")
 	defer span.End()
 
-	url = common.ValidateUrl(url)
-	if url == "" {
-		log.Info().Msgf("invalid input url %s", url)
+	url, err := common.ValidateUrl(url)
+	if err != nil {
+		log.Info().Err(err).Msgf("invalid input url %s", url)
 		return ErrBadUrl
 	}
 	if !common.ValidateShortId(id) {
 		return ErrBadShortId
 	}
 
-	err := s.storage.SaveLinkForUser(ctx, id, userId, url)
+	err = s.storage.SaveLinkForUser(ctx, id, userId, url)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed saving link to storage")
 		return ErrInternal

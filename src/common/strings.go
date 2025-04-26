@@ -47,20 +47,20 @@ func ValidateUserId(value string) bool {
 	return err == nil
 }
 
-func ValidateUrl(url string) string {
+func ValidateUrl(url string) (string, error) {
 	if len(url) > 2000 {
-		return ""
+		return "", fmt.Errorf("bad url")
 	}
 	url = strings.TrimSpace(url)
 	if !govalidator.IsURL(url) {
-		return ""
+		return "", fmt.Errorf("bad url")
 	}
 
 	if !strings.HasPrefix(url, "http") && !strings.HasPrefix(url, "https") {
 		url = fmt.Sprintf("https://%s", url)
 	}
 
-	return url
+	return url, nil
 }
 
 func NewDigitsString(size int) string {
