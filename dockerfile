@@ -1,9 +1,9 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
 WORKDIR /backend
 
-COPY go.mod go.sum config.go main.go ./
-COPY src ./src
-COPY server ./server
+COPY go.mod go.sum ./
+COPY internal ./internal
+COPY cmd/shorty ./cmd/shorty
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,source=go.sum,target=go.sum \
@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target="/root/.cache/go-build" \
     --mount=type=bind,source=go.sum,target=go.sum \
     --mount=type=bind,source=go.mod,target=go.mod \
-    go build -ldflags "-s -w" -o app
+    go build -ldflags "-s -w" -o app ./cmd/shorty
 
 RUN chmod +x app
 

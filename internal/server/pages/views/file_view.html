@@ -1,0 +1,40 @@
+{{ define "content" }}
+<script>
+    window.addEventListener("load", function(){
+        const urlParams = new URLSearchParams(window.location.search);
+        const err = urlParams.get('err');
+        if (err && err !== "") {
+            $("#notifyanchor").notify(err,
+                    { position:"bottom left", autoHideDelay: 5000, className: "error" });
+        }
+    });
+</script>
+<div class="bg-white rounded-md shadow-lg p-4 min-w-[400px]">
+    <div class="flex flex-row justify-between items-start w-full">
+        <div class="flex flex-row justify-start items-start">
+            <img src="/static/file.png" class="w-12 h-12 mr-2 p-0 object-contain" alt="file">
+            <div class="flex flex-col justify-between">
+                <p class="mb-1 text-md">{{ .FileName }}</p>
+                <p class="mb-2 text-sm">{{ printf "%.2f" .FileSizeMB }} MB</p>
+            </div>
+        </div>
+        <button onclick="alert('Not implemented')" class="ml-2 pl-1 pr-1 rounded-md text-white font-bold bg-red-600 hover:bg-red-400 active:bg-red-500">Report</button>
+    </div>
+    <div class="flex flex-col mb-2 w-full">        
+        <form action="{{ .FileDownloadUrl }}" method="GET">
+            <div class="bg-white rounded-md mt-2">
+                <input type="hidden" name="id" value="{{ .CaptchaId }}">
+                <div class="flex flex-row justify-between items-start">
+                    <button id="notifyanchor" class="flex p-1 pl-2 pr-2 text-center text-white rounded-md shadow-sm bg-sky-800 active:bg-sky-600 hover:bg-sky-700 transition-all">Download File</button>
+                    <div class="flex flex-row rounded-md border border-gray-300">
+                        <img class="w-24 h-12 border-r border-gray-300" src="data:image/jpeg;base64, {{ .CaptchaBase64 }}" alt="token">
+                        <input type="text" inputmode="numeric" placeholder="Captcha..." name="token" class="w-20 h-12 text-center" required>
+                    </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    <p>URL:</p>
+    <textarea class="w-full rounded-sm p-1 bg-gray-200 resize-none">{{ .FileViewUrl }}</textarea>
+</div>
+{{ end }}
