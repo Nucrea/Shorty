@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run deps",            
+            "type": "shell",
+            "command": "./deploy/run-deps.sh",
+            "problemMatcher": []
+        }
+    ]
+}
