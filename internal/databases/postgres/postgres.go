@@ -51,7 +51,7 @@ func (p *Postgres) SaveImageMetadata(ctx context.Context, meta image.ImageMetada
 func (p *Postgres) GetImageMetadataDuplicate(ctx context.Context, size int, hash string) (*image.ImageMetadataExDTO, error) {
 	scanFunc := func(row pgx.Row) (*image.ImageMetadataExDTO, error) {
 		r := &image.ImageMetadataExDTO{Size: size, Hash: hash}
-		return r, row.Scan(&r.Name, &r.OriginalResourceId, &r.OriginalId, &r.ThumbnailId, &r.ThumbnailResourceId)
+		return r, row.Scan(&r.Id, &r.Name, &r.OriginalId, &r.OriginalResourceId, &r.ThumbnailId, &r.ThumbnailResourceId)
 	}
 
 	query := `SELECT i.id, i.name, ao.id, ao.resource_id, at.id, at.resource_id
