@@ -1,3 +1,105 @@
-include:
-  - compose.base.yml
-  - compose.observe.yml
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7.4.2-alpine
+    ports:
+      - 6379:6379
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.122.1
+    volumes:
+      - ./deploy/otel.yml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 13133:13133 # health_check extension
+      - 4318:4318 # OTLP http receiver
+
+  minio:
+    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    healthcheck:
+      test: 'mc ready local'
+      interval: 1s
+    environment:
+      MINIO_ROOT_USER: miniouser
+      MINIO_ROOT_PASSWORD: miniouser
+    ports:
+      - 9000:9000
+      - 9001:9001
+
+  minio-init:
+    image: quay.io/minio/mc:RELEASE.2025-02-21T16-00-46Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 miniouser miniouser;
+      /usr/bin/mc mb myminio/images;
+      /usr/bin/mc mb myminio/files;
+      /usr/bin/mc anonymous set public myminio/images;
+      /usr/bin/mc admin accesskey create myminio --access-key miniokey --secret-key miniokey;
+      exit 0;
+      "
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Editor
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/dashboard.json
+    volumes:
+      - ./deploy/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./deploy/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yaml:ro
+      - ./deploy/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
+
+  loki:
+     image: grafana/loki:3.0.0
+     command: -config.file=/etc/loki/local-config.yaml
+
+  tempo-init:
+    image: &tempoImage grafana/tempo:r177-60780f7
+    user: root
+    entrypoint: "chown 10001:10001 /var/tempo"
+    volumes:
+      - tempo-volume:/var/tempo
+
+  tempo:
+    image: *tempoImage
+    command: [ "-config.file=/etc/tempo.yml" ]
+    volumes:
+      - ./deploy/tempo.yml:/etc/tempo.yml
+      - tempo-volume:/var/tempo
+    depends_on:
+      - tempo-init
+
+  alloy:
+    image: grafana/alloy:v1.7.1
+    volumes:
+      - ./deploy/config.alloy:/etc/alloy/config.alloy
+      - ./.run/shorty.log:/var/log/shorty.log:ro"
+    command: 'run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy'
+  
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    command: [ "--web.enable-otlp-receiver", "--config.file=/etc/prometheus.yml" ]
+    extra_hosts:
+      - "host.docker.internal=host-gateway"
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus.yml
+    ports:
+      - 9090:9090
+
+volumes:
+  tempo-volume:
