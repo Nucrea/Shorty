@@ -2,6 +2,7 @@ package assets
 
 import (
 	"context"
+	"fmt"
 	"shorty/internal/common"
 	"shorty/internal/common/logging"
 	"strings"
@@ -110,8 +111,12 @@ func (s *Storage) GetAssetBytes(ctx context.Context, bucket, id string) ([]byte,
 	defer span.End()
 
 	meta, err := s.getAssetMetadata(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 	if meta == nil {
-		log.Info().Msgf("no such asset, bucket=%s id=%s", bucket, id)
+		log.Error().Msgf("no such asset, bucket=%s id=%s", bucket, id)
+		return nil, fmt.Errorf("no such asset with id = %s", id)
 	}
 
 	fileBytes, err := s.fileRepo.GetFile(ctx, bucket, meta.ResourceId)

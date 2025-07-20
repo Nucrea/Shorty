@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"net/http"
 	"shorty/internal/common"
 	"shorty/internal/services/image"
 	"strconv"
@@ -54,11 +53,11 @@ func (s *server) ImageResolve(c *gin.Context) {
 		}
 	}
 
-	if oldEtag := c.GetHeader("If-None-Match"); oldEtag == meta.Hash {
-		s.Logger.WithContext(c).Info().Msgf("image (id=%s) hash does not changed", id)
-		c.AbortWithStatus(http.StatusNotModified)
-		return
-	}
+	// if oldEtag := c.GetHeader("If-None-Match"); oldEtag == meta.Hash {
+	// 	s.Logger.WithContext(c).Info().Msgf("image (id=%s) hash does not changed", id)
+	// 	c.AbortWithStatus(http.StatusNotModified)
+	// 	return
+	// }
 
 	imageBytes, err := s.ImageService.GetImageBytes(c, id, isThumbnail)
 	if err == image.ErrImageNotFound {

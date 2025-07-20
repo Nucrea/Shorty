@@ -184,18 +184,18 @@ func (s *Service) GetImageBytes(ctx context.Context, id string, thumbnail bool) 
 		return nil, err
 	}
 
-	resourceId := meta.OriginalResourceId
+	assetId := meta.OriginalId
 	if thumbnail {
-		resourceId = meta.ThumbnailResourceId
+		assetId = meta.ThumbnailId
 	}
 
-	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, BucketName, resourceId)
+	assetBytes, err := s.assetStorage.GetAssetBytes(ctx, BucketName, assetId)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed getting image asset bytes from storage (id=%s, resourceId=%s, thumbnail=%t)", id, resourceId, thumbnail)
+		log.Error().Err(err).Msgf("failed getting image asset bytes from storage (id=%s, assetId=%s, thumbnail=%t)", id, assetId, thumbnail)
 		return nil, ErrInternal
 	}
 
-	log.Info().Msgf("read image asset (id=%s, resourceId=%s, thumbnail=%t)", id, resourceId, thumbnail)
+	log.Info().Msgf("read image asset (id=%s, assetId=%s, thumbnail=%t)", id, assetId, thumbnail)
 	if thumbnail {
 		s.thumbDownloadsCounter.Inc()
 	} else {
